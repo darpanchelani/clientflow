@@ -10,7 +10,7 @@
 
 ---
 
-## 🎯 Overview
+## Overview
 
 ClientFlow is a unified, AI-powered SaaS platform that consolidates the entire client lifecycle management for freelancers, consultants, and small agencies into a single, intelligent dashboard.
 
@@ -22,15 +22,15 @@ ClientFlow is a unified, AI-powered SaaS platform that consolidates the entire c
 
 ### Solution
 ClientFlow provides:
-- ✅ **Unified Client Lifecycle Management** (CRM + Projects + Invoices)
-- ✅ **AI-Powered Insights** (Lead scoring, payment risk, churn prediction)
-- ✅ **Intelligent Automation** (Reminders, proposals, notifications)
-- ✅ **Advanced Analytics** (Revenue forecasting, pipeline management)
-- ✅ **Enterprise Architecture** (Multi-tenant, scalable, secure)
+- **Unified Client Lifecycle Management** (CRM + Projects + Invoices)
+- **AI-Powered Insights** (Lead scoring, payment risk, churn prediction)
+- **Intelligent Automation** (Reminders, proposals, notifications)
+- **Advanced Analytics** (Revenue forecasting, pipeline management)
+- **Enterprise Architecture** (Multi-tenant, scalable, secure)
 
 ---
 
-## 📊 Key Metrics
+## Key Metrics
 
 | Metric | Value | Impact |
 |--------|-------|--------|
@@ -45,7 +45,7 @@ ClientFlow provides:
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ### System Design
 ```
@@ -84,7 +84,7 @@ ClientFlow provides:
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 ```bash
@@ -131,31 +131,7 @@ http://localhost:8000  # Backend
 
 ---
 
-## 📚 Documentation
-
-Comprehensive documentation covering every aspect of the project:
-
-| Document | Description |
-|----------|-------------|
-| [01-EXECUTIVE-OVERVIEW](./01-EXECUTIVE-OVERVIEW.md) | Business context, market analysis, financial projections |
-| [02-SYSTEM-ARCHITECTURE](./02-SYSTEM-ARCHITECTURE.md) | Complete system design, technology choices, scalability |
-| [03-CORE-MODULES](./03-CORE-MODULES.md) | Detailed module specifications (12 modules) |
-| [04-AI-FEATURES](./04-AI-FEATURES.md) | ML models, training pipeline, production serving |
-| [05-DATABASE-DESIGN](./05-DATABASE-DESIGN.md) | Complete PostgreSQL schema (35 tables) |
-| [06-API-DESIGN](./06-API-DESIGN.md) | REST API endpoints, request/response examples |
-| [07-GRAPHQL-DESIGN](./07-GRAPHQL-DESIGN.md) | GraphQL schema, types, queries, mutations |
-| [08-FRONTEND-BACKEND-DEVOPS](./08-FRONTEND-BACKEND-DEVOPS.md) | Frontend architecture, backend patterns, DevOps |
-| [09-TESTING-RESUME-INTERVIEWS](./09-TESTING-RESUME-INTERVIEWS.md) | Testing strategy, resume content, tips |
-| [10-INTERVIEW-QUESTIONS](./10-INTERVIEW-QUESTIONS.md) | 30+ technical interview questions with answers |
-| [11-REPOSITORY-STRUCTURE](./11-REPOSITORY-STRUCTURE.md) | Complete file structure and statistics |
-| [12-SECURITY-COMPLIANCE](./12-SECURITY-COMPLIANCE.md) | Security architecture, compliance (GDPR, SOC 2), audit logging |
-| [13-SCALABILITY-ROADMAP](./13-SCALABILITY-ROADMAP.md) | Horizontal scaling strategy, performance targets, growth roadmap |
-| [14-PRODUCT-ROADMAP](./14-PRODUCT-ROADMAP.md) | Feature roadmap, prioritization, release planning |
-| [15-LAUNCH-DEPLOYMENT-CHECKLIST](./15-LAUNCH-DEPLOYMENT-CHECKLIST.md) | Production launch checklist, go-live procedures |
-
----
-
-## 🎨 Core Features
+## Core Features
 
 ### 1. Lead Management
 - AI-powered lead scoring (82% accuracy)
@@ -201,7 +177,7 @@ Comprehensive documentation covering every aspect of the project:
 
 ---
 
-## 🤖 Machine Learning
+## Machine Learning 
 
 ### Models
 
@@ -242,7 +218,7 @@ Business Impact: Reduces proposal creation from 2 hours to 5 minutes
 
 ---
 
-## 📈 Performance
+## Performance
 
 ### API Performance
 ```
@@ -276,7 +252,7 @@ Replication Lag        <100ms       <50ms
 
 ---
 
-## 🔒 Security
+## Security
 
 ### Authentication & Authorization
 - JWT-based authentication with refresh tokens
@@ -301,7 +277,7 @@ Replication Lag        <100ms       <50ms
 
 ---
 
-## 🚢 Deployment
+## Deployment
 
 ### Environments
 
@@ -345,7 +321,7 @@ Total: ~6 minutes
 
 ---
 
-## 💰 Business Model
+## Business Model
 
 ### Pricing Tiers
 
@@ -375,7 +351,7 @@ Net Margin:        35%
 
 ---
 
-## 📦 Project Statistics
+## Project Statistics
 
 ```
 Backend:
@@ -401,33 +377,33 @@ Total:
 
 ---
 
-## 🎓 Learning Resources
+## Learning Resources
 
 This project demonstrates:
 
-✅ **Full-Stack Development**
+ **Full-Stack Development**
 - Modern frontend (React, Redux, Material UI)
 - Production backend (Django, DRF, GraphQL)
 - Database design (PostgreSQL, normalization)
 
-✅ **Machine Learning**
+ **Machine Learning**
 - ML pipeline (data → training → deployment)
 - Model selection and hyperparameter tuning
 - Production model serving and monitoring
 
-✅ **DevOps & Cloud**
+ **DevOps & Cloud**
 - Container orchestration (Docker)
 - CI/CD automation (GitHub Actions)
 - AWS cloud deployment
 - Infrastructure as Code (Terraform)
 
-✅ **Software Architecture**
+ **Software Architecture**
 - Multi-tenant SaaS design
 - Service-oriented architecture
 - Repository and factory patterns
 - Scalable system design
 
-✅ **Business Skills**
+ **Business Skills**
 - SaaS metrics (MRR, ARR, LTV/CAC)
 - Market analysis and positioning
 - Financial projections
@@ -435,7 +411,7 @@ This project demonstrates:
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 This is a portfolio project, but contributions are welcome for:
 - Bug fixes
@@ -447,23 +423,22 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
 
 ---
 
-## 📞 Contact & Support
+## Contact & Support
 
 **Project Lead**: [Your Name]
-- Portfolio: [your-portfolio.com](https://your-portfolio.com)
-- GitHub: [@your-username](https://github.com/your-username)
-- LinkedIn: [your-profile](https://linkedin.com/in/your-profile)
-- Email: [your-email@example.com](mailto:your-email@example.com)
+- GitHub: https://github.com/darpanchelani
+- LinkedIn: https://linkedin.com/in/darpanchelani
+- Email: darpanchelani12@gmail.com
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - Django & Django REST Framework communities
 - React community
@@ -473,22 +448,22 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 
 ---
 
-## 🗺️ Roadmap
+## Roadmap
 
-### Completed ✅
+### Completed 
 - Core CRM functionality
 - Lead scoring with ML
 - Invoice management
 - Payment tracking
 - Basic analytics
 
-### In Progress 🔄
+### In Progress 
 - Mobile app (React Native)
 - Advanced reporting
 - Workflow automation (Zapier integration)
 - Team collaboration features
 
-### Planned 🚀
+### Planned 
 - AI chatbot for customer support
 - Business intelligence suite
 - API partner ecosystem
@@ -496,65 +471,13 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 
 ---
 
-## 📊 Demo
-
-### Screenshots
-[Dashboard Screenshot]
-[Lead Management Screenshot]
-[Analytics Dashboard Screenshot]
-
-### Video Tour
-[Link to demo video on YouTube]
-
-### Live Demo
-[Link to live demo environment]
-
----
-
-## ⭐ Show Your Support
+## Show Your Support
 
 If this project helped you or you find it interesting, please consider:
 - Starring the repository
 - Sharing with your network
 - Using it as a reference for your own projects
 - Providing feedback
-
----
-
-## FAQ
-
-**Q: Can I use this code in production?**
-A: This is a portfolio project. It's production-ready but designed for educational purposes. Requires customization for your specific use case.
-
-**Q: Is the ML model accurate?**
-A: The lead scoring model achieves 82% precision on test data. Performance depends on your data quality and use case.
-
-**Q: How much does it cost to deploy?**
-A: Approximately $5-10K/month on AWS at scale (10K+ users). Varies based on traffic and features used.
-
-**Q: Can I modify and redistribute?**
-A: Yes, under MIT license. Please provide attribution.
-
-**Q: How long did this take to build?**
-A: Approximately 6-9 months for one full-stack engineer.
-
----
-
-## 📚 Additional Resources
-
-- [System Architecture Deep Dive](./02-SYSTEM-ARCHITECTURE.md)
-- [API Documentation](./06-API-DESIGN.md)
-- [ML Pipeline Guide](./04-AI-FEATURES.md)
-- [Interview Preparation](./10-INTERVIEW-QUESTIONS.md)
-- [Development Guide](./docs/DEVELOPMENT.md)
-- [Deployment Guide](./docs/DEPLOYMENT.md)
-
----
-
-**Last Updated**: June 2026
-**Status**: Production Ready
-**Version**: 1.0.0
-**Python**: 3.12+
 
 ---
 
