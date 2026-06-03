@@ -425,7 +425,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
 
 ## Contact & Support
 
-**Project Lead**: [Your Name]
+**Project Lead**: Darpan Chelani
 - GitHub: https://github.com/darpanchelani
 - LinkedIn: https://linkedin.com/in/darpanchelani
 - Email: darpanchelani12@gmail.com
