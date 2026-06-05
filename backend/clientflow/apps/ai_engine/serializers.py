@@ -62,6 +62,9 @@ class InsightGenerateSerializer(serializers.Serializer):
 class ProposalDraftSerializer(serializers.ModelSerializer):
     user_email = serializers.EmailField(source='user.email', read_only=True)
     source = serializers.CharField(read_only=True)
+    lead_summary = serializers.SerializerMethodField()
+    client_summary = serializers.SerializerMethodField()
+    project_summary = serializers.SerializerMethodField()
 
     class Meta:
         model = ProposalDraft
@@ -70,8 +73,11 @@ class ProposalDraftSerializer(serializers.ModelSerializer):
             'user',
             'user_email',
             'client',
+            'client_summary',
             'lead',
+            'lead_summary',
             'project',
+            'project_summary',
             'title',
             'generated_content',
             'status',
@@ -85,7 +91,45 @@ class ProposalDraftSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
         )
-        read_only_fields = ('id', 'user', 'user_email', 'source', 'created_at', 'updated_at')
+        read_only_fields = (
+            'id',
+            'user',
+            'user_email',
+            'source',
+            'lead_summary',
+            'client_summary',
+            'project_summary',
+            'created_at',
+            'updated_at',
+        )
+
+    def get_lead_summary(self, obj):
+        if not obj.lead_id:
+            return None
+        return {
+            'id': obj.lead_id,
+            'name': obj.lead.name,
+            'email': obj.lead.email,
+            'company': obj.lead.company,
+        }
+
+    def get_client_summary(self, obj):
+        if not obj.client_id:
+            return None
+        return {
+            'id': obj.client_id,
+            'name': obj.client.name,
+            'email': obj.client.email,
+            'company': obj.client.company,
+        }
+
+    def get_project_summary(self, obj):
+        if not obj.project_id:
+            return None
+        return {
+            'id': obj.project_id,
+            'name': obj.project.name,
+        }
 
 
 class ProposalGenerateSerializer(serializers.Serializer):
@@ -111,6 +155,14 @@ class ProposalGenerateSerializer(serializers.Serializer):
     include_timeline = serializers.BooleanField(required=False, default=True)
     include_deliverables = serializers.BooleanField(required=False, default=True)
 
+    def to_internal_value(self, data):
+        if hasattr(data, 'copy'):
+            data = data.copy()
+        for field in ('lead_id', 'client_id', 'project_id'):
+            if data.get(field) == '':
+                data[field] = None
+        return super().to_internal_value(data)
+
     def validate(self, attrs):
         if attrs.get('estimated_budget') is not None and attrs['estimated_budget'] < 0:
             raise serializers.ValidationError({'estimated_budget': 'Estimated budget cannot be negative.'})
@@ -130,21 +182,21 @@ class ProposalGenerateSerializer(serializers.Serializer):
         if lead_id:
             lead = Lead.objects.filter(pk=lead_id, organization_name=scope).first()
             if not lead:
-                raise serializers.ValidationError({'lead_id': 'Lead not found or not accessible.'})
+                raise serializers.ValidationError({'lead_id': 'Selected lead was not found.'})
             attrs['lead'] = lead
 
         client_id = attrs.get('client_id')
         if client_id:
             client = Client.objects.filter(pk=client_id, organization_name=scope).first()
             if not client:
-                raise serializers.ValidationError({'client_id': 'Client not found or not accessible.'})
+                raise serializers.ValidationError({'client_id': 'Selected client was not found.'})
             attrs['client'] = client
 
         project_id = attrs.get('project_id')
         if project_id:
             project = Project.objects.filter(pk=project_id, client__organization_name=scope).select_related('client').first()
             if not project:
-                raise serializers.ValidationError({'project_id': 'Project not found or not accessible.'})
+                raise serializers.ValidationError({'project_id': 'Selected project was not found.'})
             attrs['project'] = project
             attrs.setdefault('client', project.client)
 

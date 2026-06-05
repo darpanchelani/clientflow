@@ -56,8 +56,24 @@ export interface ProposalDraft {
   user: number;
   user_email?: string;
   client: number | null;
+  client_summary?: {
+    id: number;
+    name: string;
+    email?: string;
+    company?: string;
+  } | null;
   lead: number | null;
+  lead_summary?: {
+    id: number;
+    name: string;
+    email?: string;
+    company?: string;
+  } | null;
   project: number | null;
+  project_summary?: {
+    id: number;
+    name: string;
+  } | null;
   title: string;
   generated_content: string;
   status: 'draft' | 'approved' | 'archived';

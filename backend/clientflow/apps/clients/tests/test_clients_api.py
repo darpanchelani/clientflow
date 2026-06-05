@@ -20,6 +20,13 @@ class ClientAPITests(APITestCase):
             last_name='User',
             organization_name='ClientFlow',
         )
+        self.other_user = User.objects.create_user(
+            email='other-owner@example.com',
+            password=self.password,
+            first_name='Other',
+            last_name='Owner',
+            organization_name='OtherOrg',
+        )
         login = self.client.post(
             reverse('auth:login'),
             {'email': self.user.email, 'password': self.password},
@@ -137,3 +144,64 @@ class ClientAPITests(APITestCase):
         )
         self.assertEqual(second_response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_empty_string_lead_id_creates_client_without_lead(self):
+        response = self.client.post(
+            reverse('clients:client-list'),
+            {
+                'name': 'Direct Client',
+                'email': 'direct@clientflow.com',
+                'phone': '+1-555-0500',
+                'company': 'Direct LLC',
+                'status': 'active',
+                'lead_id': '',
+                'tag_names': [],
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIsNone(response.data['lead'])
+
+    def test_invalid_lead_id_returns_friendly_error(self):
+        response = self.client.post(
+            reverse('clients:client-list'),
+            {
+                'name': 'Invalid Lead Client',
+                'email': 'invalid@clientflow.com',
+                'phone': '+1-555-0501',
+                'company': 'Invalid LLC',
+                'status': 'active',
+                'lead_id': 999999,
+                'tag_names': [],
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('Selected lead was not found.', str(response.data['fields']['lead_id']))
+
+    def test_other_organization_lead_id_returns_friendly_error(self):
+        other_lead = Lead.objects.create(
+            name='Other Lead',
+            email='other-lead@example.com',
+            company='Other Org',
+            owner=self.other_user,
+            organization_name='OtherOrg',
+        )
+
+        response = self.client.post(
+            reverse('clients:client-list'),
+            {
+                'name': 'Blocked Client',
+                'email': 'blocked@clientflow.com',
+                'phone': '+1-555-0502',
+                'company': 'Blocked LLC',
+                'status': 'active',
+                'lead_id': other_lead.pk,
+                'tag_names': [],
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('Selected lead was not found.', str(response.data['fields']['lead_id']))

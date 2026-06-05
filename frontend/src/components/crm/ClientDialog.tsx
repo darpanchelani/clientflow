@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { formResolver } from '../../lib/validation/formResolver';
-import { Button, Grid, MenuItem } from '@mui/material';
+import { Autocomplete, Button, Grid, MenuItem, TextField } from '@mui/material';
 import { useForm } from 'react-hook-form';
 
 import AppDialog from '../common/AppDialog';
@@ -8,7 +8,9 @@ import AppForm from '../common/AppForm';
 import FormTextField from '../common/FormTextField';
 import LoadingButton from '../common/LoadingButton';
 import { clientFormSchema, ClientFormData } from '../../lib/validation/schemas';
-import { Client, ClientFormValues } from '../../types/crm';
+import { Client, ClientFormValues, Lead } from '../../types/crm';
+import { useLeadsQuery } from '../../hooks/useLeads';
+import { getFriendlyErrorMessage } from '../../utils/apiError';
 
 interface ClientDialogProps {
   open: boolean;
@@ -24,16 +26,30 @@ const defaultValues: ClientFormData = {
   phone: '',
   company: '',
   status: 'active',
-  leadId: '',
   tagText: '',
 };
 
+type LeadOption = Pick<Lead, 'id' | 'name' | 'email' | 'company' | 'status' | 'source'>;
+
+const leadLabel = (lead: LeadOption) =>
+  [lead.name, lead.email, lead.company].filter(Boolean).join(' · ');
+
 const ClientDialog = ({ open, initialClient, loading, onClose, onSubmit }: ClientDialogProps) => {
+  const leadsQuery = useLeadsQuery({});
+  const [selectedLead, setSelectedLead] = useState<LeadOption | null>(null);
   const form = useForm<ClientFormData>({
     resolver: formResolver(clientFormSchema),
     defaultValues,
     mode: 'onBlur',
   });
+
+  const leadOptions = useMemo<LeadOption[]>(() => {
+    const options = leadsQuery.data?.results ?? [];
+    if (initialClient?.lead && !options.some((lead) => lead.id === initialClient.lead?.id)) {
+      return [initialClient.lead, ...options];
+    }
+    return options;
+  }, [initialClient?.lead, leadsQuery.data?.results]);
 
   useEffect(() => {
     if (!open) return;
@@ -45,13 +61,14 @@ const ClientDialog = ({ open, initialClient, loading, onClose, onSubmit }: Clien
         phone: initialClient.phone,
         company: initialClient.company,
         status: initialClient.status,
-        leadId: initialClient.lead?.id ? String(initialClient.lead.id) : '',
         tagText: initialClient.tags.map((tag) => tag.name).join(', '),
       });
+      setSelectedLead(initialClient.lead);
       return;
     }
 
     form.reset(defaultValues);
+    setSelectedLead(null);
   }, [form, initialClient, open]);
 
   const handleSubmit = async (values: ClientFormData) => {
@@ -59,15 +76,13 @@ const ClientDialog = ({ open, initialClient, loading, onClose, onSubmit }: Clien
       .split(',')
       .map((tag) => tag.trim())
       .filter(Boolean);
-    const lead_id = values.leadId?.trim() ? Number(values.leadId) : null;
-
     await onSubmit({
       name: values.name,
       email: values.email || '',
       phone: values.phone || '',
       company: values.company || '',
       status: values.status,
-      lead_id: Number.isNaN(lead_id as number) ? null : lead_id,
+      lead_id: selectedLead?.id ?? null,
       tag_names,
     });
   };
@@ -111,11 +126,25 @@ const ClientDialog = ({ open, initialClient, loading, onClose, onSubmit }: Clien
             <FormTextField<ClientFormData> name="company" label="Company" fullWidth />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <FormTextField<ClientFormData>
-              name="leadId"
-              label="Lead ID"
-              fullWidth
-              helperText="Optional lead conversion reference"
+            <Autocomplete
+              options={leadOptions}
+              value={selectedLead}
+              onChange={(_, value) => setSelectedLead(value)}
+              getOptionLabel={leadLabel}
+              loading={leadsQuery.isLoading}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              noOptionsText={leadsQuery.isError ? 'Unable to load leads' : 'No leads found'}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Lead"
+                  helperText={
+                    leadsQuery.isError
+                      ? getFriendlyErrorMessage(leadsQuery.error, 'Unable to load leads.')
+                      : 'Optional lead conversion reference'
+                  }
+                />
+              )}
             />
           </Grid>
           <Grid item xs={12} sm={6}>

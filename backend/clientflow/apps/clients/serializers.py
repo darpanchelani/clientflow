@@ -8,6 +8,18 @@ from clientflow.apps.leads.models import Lead
 from .models import Client
 
 
+class LeadRelationField(serializers.PrimaryKeyRelatedField):
+    default_error_messages = {
+        'does_not_exist': 'Selected lead was not found.',
+        'incorrect_type': 'Selected lead was not found.',
+    }
+
+    def to_internal_value(self, data):
+        if data == '':
+            return None
+        return super().to_internal_value(data)
+
+
 class LeadSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = Lead
@@ -23,7 +35,7 @@ class ClientSerializer(serializers.ModelSerializer):
         required=False,
     )
     lead = LeadSummarySerializer(read_only=True)
-    lead_id = serializers.PrimaryKeyRelatedField(
+    lead_id = LeadRelationField(
         source='lead',
         queryset=Lead.objects.all(),
         required=False,
@@ -78,14 +90,27 @@ class ClientSerializer(serializers.ModelSerializer):
         if lead is None:
             return lead
 
+        return self._validate_lead_relation(lead)
+
+    def _validate_lead_relation(self, lead):
         request = self.context.get('request')
         user = getattr(request, 'user', None)
         scope = get_scope_key(user)
         if lead.organization_name != scope:
-            raise serializers.ValidationError('Selected lead does not belong to your organization.')
-        if hasattr(lead, 'client'):
+            raise serializers.ValidationError('Selected lead was not found.')
+        existing_client = Client.objects.filter(lead=lead).first()
+        if existing_client and existing_client != self.instance:
             raise serializers.ValidationError('Selected lead has already been converted into a client.')
         return lead
+
+    def validate(self, attrs):
+        lead = attrs.get('lead')
+        if lead is not None:
+            try:
+                attrs['lead'] = self._validate_lead_relation(lead)
+            except serializers.ValidationError as exc:
+                raise serializers.ValidationError({'lead_id': exc.detail}) from exc
+        return attrs
 
     def create(self, validated_data):
         tag_names = validated_data.pop('tag_names', [])

@@ -35,19 +35,28 @@ class Lead(models.Model):
     )
     organization_name = models.CharField(max_length=255, db_index=True)
     tags = models.ManyToManyField('crm.Tag', related_name='leads', blank=True)
-    activities = GenericRelation('crm.Activity', related_query_name='lead')
-    notes = GenericRelation('crm.Note', related_query_name='lead')
+    activities = GenericRelation(
+        'crm.Activity',
+        content_type_field='target_content_type',
+        object_id_field='target_object_id',
+        related_query_name='lead',
+    )
+    notes = GenericRelation(
+        'crm.Note',
+        content_type_field='target_content_type',
+        object_id_field='target_object_id',
+        related_query_name='lead',
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-created_at']
         indexes = [
-            models.Index(fields=['organization_name', 'status']),
-            models.Index(fields=['organization_name', 'source']),
-            models.Index(fields=['owner', 'created_at']),
+            models.Index(fields=['organization_name', 'status'], name='leads_lea_organi_8f9ad4_idx'),
+            models.Index(fields=['organization_name', 'source'], name='leads_lea_organi_5e4db2_idx'),
+            models.Index(fields=['owner', 'created_at'], name='leads_lea_owner__2e4b1a_idx'),
         ]
 
     def __str__(self):
         return self.name
-

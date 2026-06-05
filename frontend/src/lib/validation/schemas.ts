@@ -94,10 +94,6 @@ export const clientFormSchema = z.object({
   phone: phoneSchema,
   company: z.string().trim().optional(),
   status: z.string().min(1, 'Status is required'),
-  leadId: z
-    .string()
-    .trim()
-    .refine((value) => !value || /^\d+$/.test(value), 'Lead ID must be a number'),
   tagText: z.string().trim().optional(),
 });
 

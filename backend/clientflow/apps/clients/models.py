@@ -28,18 +28,27 @@ class Client(models.Model):
     )
     organization_name = models.CharField(max_length=255, db_index=True)
     tags = models.ManyToManyField('crm.Tag', related_name='clients', blank=True)
-    activities = GenericRelation('crm.Activity', related_query_name='client')
-    notes = GenericRelation('crm.Note', related_query_name='client')
+    activities = GenericRelation(
+        'crm.Activity',
+        content_type_field='target_content_type',
+        object_id_field='target_object_id',
+        related_query_name='client',
+    )
+    notes = GenericRelation(
+        'crm.Note',
+        content_type_field='target_content_type',
+        object_id_field='target_object_id',
+        related_query_name='client',
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-created_at']
         indexes = [
-            models.Index(fields=['organization_name', 'status']),
-            models.Index(fields=['owner', 'created_at']),
+            models.Index(fields=['organization_name', 'status'], name='client_cli_organi_5e3b7b_idx'),
+            models.Index(fields=['owner', 'created_at'], name='client_cli_owner__adcf52_idx'),
         ]
 
     def __str__(self):
         return self.name
-

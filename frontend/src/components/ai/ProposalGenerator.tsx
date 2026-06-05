@@ -1,6 +1,7 @@
 import React, { FormEvent, useState } from 'react';
 import {
   Alert,
+  Autocomplete,
   Button,
   Checkbox,
   FormControlLabel,
@@ -13,6 +14,11 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 
 import AppCard from '../common/AppCard';
 import { GenerateProposalPayload, ProposalDraft } from '../../types/ai';
+import { Client, Lead } from '../../types/crm';
+import { Project } from '../../types/projects';
+import { useClientsQuery } from '../../hooks/useClients';
+import { useLeadsQuery } from '../../hooks/useLeads';
+import { useProjectsQuery } from '../../hooks/useProjects';
 import { getFriendlyErrorMessage } from '../../utils/apiError';
 import ProposalPreviewDialog from './ProposalPreviewDialog';
 
@@ -44,11 +50,27 @@ const initialForm: GenerateProposalPayload = {
   include_deliverables: true,
 };
 
-const numberOrNull = (value: number | string | null | undefined) => {
-  if (value === '' || value === null || value === undefined) return null;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
-};
+const cleanProposalPayload = (
+  form: GenerateProposalPayload,
+  selectedLead: Lead | null,
+  selectedClient: Client | null,
+  selectedProject: Project | null
+): GenerateProposalPayload => ({
+  ...form,
+  lead_id: selectedLead?.id ?? null,
+  client_id: selectedClient?.id ?? null,
+  project_id: selectedProject?.id ?? null,
+  estimated_budget: form.estimated_budget || null,
+});
+
+const leadLabel = (lead: Lead) =>
+  [lead.name, lead.email, lead.company].filter(Boolean).join(' · ');
+
+const clientLabel = (client: Client) =>
+  [client.name, client.company || client.email].filter(Boolean).join(' · ');
+
+const projectLabel = (project: Project) =>
+  [project.name, project.client?.name].filter(Boolean).join(' · ');
 
 const ProposalGenerator = ({
   onGenerate,
@@ -62,8 +84,15 @@ const ProposalGenerator = ({
 }: ProposalGeneratorProps) => {
   const [form, setForm] = useState<GenerateProposalPayload>(initialForm);
   const [clientError, setClientError] = useState('');
+  const [submitError, setSubmitError] = useState<unknown>(null);
   const [proposal, setProposal] = useState<ProposalDraft | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const leadsQuery = useLeadsQuery({});
+  const clientsQuery = useClientsQuery({});
+  const projectsQuery = useProjectsQuery({});
 
   const updateField = (field: keyof GenerateProposalPayload, value: string | boolean | number | null) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -72,6 +101,7 @@ const ProposalGenerator = ({
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setClientError('');
+    setSubmitError(null);
     if (!form.title.trim()) {
       setClientError('Title is required.');
       return;
@@ -84,17 +114,19 @@ const ProposalGenerator = ({
       setClientError('Estimated budget cannot be negative.');
       return;
     }
+    if (!selectedLead && !selectedClient && !selectedProject && !form.client_problem?.trim()) {
+      setClientError('Client problem is required when no lead, client, or project is selected.');
+      return;
+    }
 
-    const payload: GenerateProposalPayload = {
-      ...form,
-      lead_id: numberOrNull(form.lead_id),
-      client_id: numberOrNull(form.client_id),
-      project_id: numberOrNull(form.project_id),
-      estimated_budget: form.estimated_budget || null,
-    };
-    const draft = await onGenerate(payload);
-    setProposal(draft);
-    setPreviewOpen(true);
+    const payload = cleanProposalPayload(form, selectedLead, selectedClient, selectedProject);
+    try {
+      const draft = await onGenerate(payload);
+      setProposal(draft);
+      setPreviewOpen(true);
+    } catch (requestError) {
+      setSubmitError(requestError);
+    }
   };
 
   return (
@@ -104,7 +136,7 @@ const ProposalGenerator = ({
     >
       <Stack component="form" spacing={2} onSubmit={handleSubmit}>
         {clientError ? <Alert severity="warning">{clientError}</Alert> : null}
-        {error ? <Alert severity="error">{getFriendlyErrorMessage(error)}</Alert> : null}
+        {submitError || error ? <Alert severity="error">{getFriendlyErrorMessage(submitError || error)}</Alert> : null}
         <Grid container spacing={2}>
           <Grid item xs={12} md={8}>
             <TextField
@@ -132,30 +164,63 @@ const ProposalGenerator = ({
             </TextField>
           </Grid>
           <Grid item xs={12} md={4}>
-            <TextField
-              label="Lead ID"
-              type="number"
-              value={form.lead_id ?? ''}
-              onChange={(event) => updateField('lead_id', event.target.value)}
-              fullWidth
+            <Autocomplete
+              options={leadsQuery.data?.results ?? []}
+              value={selectedLead}
+              onChange={(_, value) => setSelectedLead(value)}
+              getOptionLabel={leadLabel}
+              loading={leadsQuery.isLoading}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              noOptionsText={leadsQuery.isError ? 'Unable to load leads' : 'No leads found'}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Select lead"
+                  helperText={leadsQuery.isError ? getFriendlyErrorMessage(leadsQuery.error, 'Unable to load leads.') : 'Optional'}
+                />
+              )}
             />
           </Grid>
           <Grid item xs={12} md={4}>
-            <TextField
-              label="Client ID"
-              type="number"
-              value={form.client_id ?? ''}
-              onChange={(event) => updateField('client_id', event.target.value)}
-              fullWidth
+            <Autocomplete
+              options={clientsQuery.data?.results ?? []}
+              value={selectedClient}
+              onChange={(_, value) => setSelectedClient(value)}
+              getOptionLabel={clientLabel}
+              loading={clientsQuery.isLoading}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              noOptionsText={clientsQuery.isError ? 'Unable to load clients' : 'No clients found'}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Select client"
+                  helperText={clientsQuery.isError ? getFriendlyErrorMessage(clientsQuery.error, 'Unable to load clients.') : 'Optional'}
+                />
+              )}
             />
           </Grid>
           <Grid item xs={12} md={4}>
-            <TextField
-              label="Project ID"
-              type="number"
-              value={form.project_id ?? ''}
-              onChange={(event) => updateField('project_id', event.target.value)}
-              fullWidth
+            <Autocomplete
+              options={projectsQuery.data?.results ?? []}
+              value={selectedProject}
+              onChange={(_, value) => {
+                setSelectedProject(value);
+                if (value?.client && !selectedClient) {
+                  const matchingClient = clientsQuery.data?.results.find((client) => client.id === value.client.id);
+                  if (matchingClient) setSelectedClient(matchingClient);
+                }
+              }}
+              getOptionLabel={projectLabel}
+              loading={projectsQuery.isLoading}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              noOptionsText={projectsQuery.isError ? 'Unable to load projects' : 'No projects found'}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Select project"
+                  helperText={projectsQuery.isError ? getFriendlyErrorMessage(projectsQuery.error, 'Unable to load projects.') : 'Optional'}
+                />
+              )}
             />
           </Grid>
           <Grid item xs={12} md={4}>

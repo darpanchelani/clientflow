@@ -54,6 +54,18 @@ class AIProposalGeneratorAPITests(APITestCase):
             owner=self.other_user,
             organization_name='OtherOrg',
         )
+        self.other_client = Client.objects.create(
+            name='Blocked Client',
+            company='Other Company',
+            owner=self.other_user,
+            organization_name='OtherOrg',
+        )
+        self.other_project = Project.objects.create(
+            name='Blocked Project',
+            client=self.other_client,
+            owner=self.other_user,
+            status=Project.Status.ACTIVE,
+        )
         self.payload = {
             'lead_id': self.lead.pk,
             'client_id': self.client_obj.pk,
@@ -224,3 +236,132 @@ class AIProposalGeneratorAPITests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('lead_id', response.data['fields'])
+
+    @override_settings(OPENAI_API_KEY='', AI_PROPOSAL_PROVIDER='template')
+    def test_generate_without_relations_with_client_problem(self):
+        self.client.force_authenticate(user=self.user)
+        payload = {
+            'title': 'Standalone Proposal',
+            'proposal_type': ProposalDraft.ProposalType.CUSTOM,
+            'services_offered': 'Workflow review and implementation plan',
+            'client_problem': 'The client needs clearer delivery workflows.',
+        }
+
+        response = self.client.post(reverse('ai:proposal-generate'), payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIsNone(response.data['lead'])
+        self.assertIsNone(response.data['client'])
+        self.assertIsNone(response.data['project'])
+
+    @override_settings(OPENAI_API_KEY='', AI_PROPOSAL_PROVIDER='template')
+    def test_generate_with_valid_lead_id(self):
+        self.client.force_authenticate(user=self.user)
+        payload = {
+            'lead_id': self.lead.pk,
+            'title': 'Lead Proposal',
+            'proposal_type': ProposalDraft.ProposalType.SERVICE,
+            'services_offered': 'Discovery and implementation',
+        }
+
+        response = self.client.post(reverse('ai:proposal-generate'), payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['lead'], self.lead.pk)
+        self.assertEqual(response.data['lead_summary']['name'], self.lead.name)
+
+    @override_settings(OPENAI_API_KEY='', AI_PROPOSAL_PROVIDER='template')
+    def test_generate_with_valid_client_id(self):
+        self.client.force_authenticate(user=self.user)
+        payload = {
+            'client_id': self.client_obj.pk,
+            'title': 'Client Proposal',
+            'proposal_type': ProposalDraft.ProposalType.RETAINER,
+            'services_offered': 'Monthly workflow optimization',
+        }
+
+        response = self.client.post(reverse('ai:proposal-generate'), payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['client'], self.client_obj.pk)
+        self.assertEqual(response.data['client_summary']['name'], self.client_obj.name)
+
+    @override_settings(OPENAI_API_KEY='', AI_PROPOSAL_PROVIDER='template')
+    def test_generate_with_valid_project_id(self):
+        self.client.force_authenticate(user=self.user)
+        payload = {
+            'project_id': self.project.pk,
+            'title': 'Project Proposal',
+            'proposal_type': ProposalDraft.ProposalType.PROJECT,
+            'services_offered': 'Project delivery acceleration',
+        }
+
+        response = self.client.post(reverse('ai:proposal-generate'), payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['project'], self.project.pk)
+        self.assertEqual(response.data['client'], self.client_obj.pk)
+        self.assertEqual(response.data['project_summary']['name'], self.project.name)
+
+    def test_invalid_relation_ids_return_friendly_errors(self):
+        self.client.force_authenticate(user=self.user)
+        base_payload = {
+            'title': 'Invalid Relation Proposal',
+            'proposal_type': ProposalDraft.ProposalType.CUSTOM,
+            'services_offered': 'Workflow support',
+        }
+
+        lead_response = self.client.post(reverse('ai:proposal-generate'), {**base_payload, 'lead_id': 999999}, format='json')
+        client_response = self.client.post(reverse('ai:proposal-generate'), {**base_payload, 'client_id': 999999}, format='json')
+        project_response = self.client.post(reverse('ai:proposal-generate'), {**base_payload, 'project_id': 999999}, format='json')
+
+        self.assertEqual(lead_response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(client_response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(project_response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('Selected lead was not found.', str(lead_response.data['fields']['lead_id']))
+        self.assertIn('Selected client was not found.', str(client_response.data['fields']['client_id']))
+        self.assertIn('Selected project was not found.', str(project_response.data['fields']['project_id']))
+
+    @override_settings(OPENAI_API_KEY='', AI_PROPOSAL_PROVIDER='template')
+    def test_empty_string_relation_ids_do_not_crash(self):
+        self.client.force_authenticate(user=self.user)
+        payload = {
+            'lead_id': '',
+            'client_id': '',
+            'project_id': '',
+            'title': 'Empty Relations Proposal',
+            'proposal_type': ProposalDraft.ProposalType.CUSTOM,
+            'services_offered': 'Workflow support',
+            'client_problem': 'Manual operations need structure.',
+        }
+
+        response = self.client.post(reverse('ai:proposal-generate'), payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIsNone(response.data['lead'])
+        self.assertIsNone(response.data['client'])
+        self.assertIsNone(response.data['project'])
+
+    def test_user_cannot_generate_from_inaccessible_client_or_project(self):
+        self.client.force_authenticate(user=self.user)
+        base_payload = {
+            'title': 'Blocked Proposal',
+            'proposal_type': ProposalDraft.ProposalType.CUSTOM,
+            'services_offered': 'Workflow support',
+        }
+
+        client_response = self.client.post(
+            reverse('ai:proposal-generate'),
+            {**base_payload, 'client_id': self.other_client.pk},
+            format='json',
+        )
+        project_response = self.client.post(
+            reverse('ai:proposal-generate'),
+            {**base_payload, 'project_id': self.other_project.pk},
+            format='json',
+        )
+
+        self.assertEqual(client_response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(project_response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('client_id', client_response.data['fields'])
+        self.assertIn('project_id', project_response.data['fields'])
