@@ -33,6 +33,38 @@ class AuthenticationAPITests(APITestCase):
         self.assertEqual(response.data['user']['email'], payload['email'])
         self.assertEqual(response.data['user']['role'], 'user')
 
+    def test_register_rejects_existing_email_with_field_error(self):
+        payload = {
+            'email': self.user.email,
+            'password': 'StrongPass123!',
+            'first_name': 'New',
+            'last_name': 'User',
+            'organization_name': 'ClientFlow',
+        }
+
+        response = self.client.post(reverse('auth:register'), payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('error', response.data)
+        self.assertIn('email', response.data['fields'])
+        self.assertEqual(response.data['fields']['email'][0], 'A user with this email already exists.')
+
+    def test_register_rejects_weak_password_with_field_error(self):
+        payload = {
+            'email': 'weak@example.com',
+            'password': 'password',
+            'first_name': 'Weak',
+            'last_name': 'Password',
+            'organization_name': 'ClientFlow',
+        }
+
+        response = self.client.post(reverse('auth:register'), payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('error', response.data)
+        self.assertIn('password', response.data['fields'])
+        self.assertTrue(len(response.data['fields']['password']) > 0)
+
     def test_login_returns_tokens_and_user(self):
         payload = {
             'email': self.user.email,

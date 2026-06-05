@@ -2,7 +2,7 @@ import axios from 'axios';
 import { clearAuthTokens, getAccessToken, getRefreshToken, setAuthTokens } from './tokenStorage';
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8000/api',
+  baseURL: process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -19,7 +19,7 @@ api.interceptors.request.use((config) => {
 });
 
 const refreshClient = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8000/api',
+  baseURL: process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api',
   headers: {
     'Content-Type': 'application/json',
   },

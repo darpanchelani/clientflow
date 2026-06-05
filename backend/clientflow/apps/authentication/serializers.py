@@ -1,4 +1,6 @@
 from django.contrib.auth import authenticate
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
@@ -27,6 +29,19 @@ class RegisterSerializer(serializers.ModelSerializer):
         role = validated_data.pop('role', User.Role.USER)
         user = User.objects.create_user(password=password, role=role, **validated_data)
         return user
+
+    def validate_email(self, value):
+        normalized_email = User.objects.normalize_email(value)
+        if User.objects.filter(email__iexact=normalized_email).exists():
+            raise serializers.ValidationError('A user with this email already exists.')
+        return normalized_email
+
+    def validate_password(self, value):
+        try:
+            validate_password(value)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(exc.messages)
+        return value
 
 
 class LoginSerializer(serializers.Serializer):

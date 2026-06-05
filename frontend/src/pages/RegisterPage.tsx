@@ -12,6 +12,7 @@ import { registerSchema, RegisterFormData } from '../lib/validation/schemas';
 import { useAppDispatch, useAppSelector } from '../store';
 import { clearError, register } from '../store/slices/authSlice';
 import { getFriendlyErrorMessage } from '../utils/apiError';
+import type { ApiErrorPayload } from '../utils/apiError';
 
 const RegisterPage = () => {
   const dispatch = useAppDispatch();
@@ -40,8 +41,24 @@ const RegisterPage = () => {
     dispatch(clearError());
     const result = await dispatch(register(values));
     if (register.rejected.match(result)) {
+      const payload = result.payload as ApiErrorPayload | undefined;
+
+      if (payload?.fields && typeof payload.fields === 'object') {
+        Object.entries(payload.fields).forEach(([field, messages]) => {
+          if (field === 'email' || field === 'password' || field === 'organization_name' || field === 'first_name' || field === 'last_name') {
+            const message = Array.isArray(messages) ? messages[0] : messages;
+            if (message) {
+              form.setError(field as keyof RegisterFormData, {
+                type: 'server',
+                message,
+              });
+            }
+          }
+        });
+      }
+
       form.setError('root', {
-        message: getFriendlyErrorMessage(result.payload, 'Registration failed'),
+        message: getFriendlyErrorMessage(payload, 'Registration failed'),
       });
     }
   };

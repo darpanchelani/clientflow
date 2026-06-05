@@ -6,19 +6,10 @@ import {
   getRefreshToken,
   setAuthTokens,
 } from '../../services/tokenStorage';
+import { parseApiErrorPayload } from '../../utils/apiError';
 
 const getErrorMessage = (payload: any, fallback: string) => {
-  if (!payload) return fallback;
-  if (typeof payload === 'string') return payload;
-  if (typeof payload.error === 'string') return payload.error;
-  if (typeof payload.detail === 'string') return payload.detail;
-  if (payload.fields && typeof payload.fields === 'object') {
-    const values = Object.values(payload.fields).flat().filter(Boolean);
-    if (values.length > 0) {
-      return values.join(' ');
-    }
-  }
-  return fallback;
+  return parseApiErrorPayload(payload) ?? fallback;
 };
 
 interface User {
@@ -63,7 +54,7 @@ export const login = createAsyncThunk(
       const response = await api.post('/auth/login', credentials);
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(getErrorMessage(error.response?.data, 'Login failed'));
+      return rejectWithValue(error.response?.data);
     }
   }
 );
@@ -84,9 +75,7 @@ export const register = createAsyncThunk(
       const response = await api.post('/auth/register', data);
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(
-        getErrorMessage(error.response?.data, 'Registration failed')
-      );
+      return rejectWithValue(error.response?.data);
     }
   }
 );
@@ -108,9 +97,7 @@ export const checkAuth = createAsyncThunk(
         token = refreshResponse.data.access;
       } catch (error: any) {
         clearAuthTokens();
-        return rejectWithValue(
-          getErrorMessage(error.response?.data, 'Auth check failed')
-        );
+        return rejectWithValue(error.response?.data);
       }
     }
 
@@ -123,9 +110,7 @@ export const checkAuth = createAsyncThunk(
       return response.data;
     } catch (error: any) {
       clearAuthTokens();
-      return rejectWithValue(
-        getErrorMessage(error.response?.data, 'Auth check failed')
-      );
+      return rejectWithValue(error.response?.data);
     }
   },
   {
@@ -165,9 +150,7 @@ export const refreshAuth = createAsyncThunk(
       return response.data;
     } catch (error: any) {
       clearAuthTokens();
-      return rejectWithValue(
-        getErrorMessage(error.response?.data, 'Token refresh failed')
-      );
+      return rejectWithValue(error.response?.data);
     }
   }
 );
@@ -211,7 +194,7 @@ const authSlice = createSlice({
         state.isChecking = false;
         state.accessToken = null;
         state.refreshToken = null;
-        state.error = action.payload as string;
+        state.error = getErrorMessage(action.payload, 'Login failed');
         state.isAuthenticated = false;
         state.user = null;
       })
@@ -236,7 +219,7 @@ const authSlice = createSlice({
         state.isChecking = false;
         state.accessToken = null;
         state.refreshToken = null;
-        state.error = action.payload as string;
+        state.error = getErrorMessage(action.payload, 'Registration failed');
         state.isAuthenticated = false;
         state.user = null;
       })

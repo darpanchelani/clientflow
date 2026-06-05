@@ -6,6 +6,7 @@ export type ApiErrorPayload = {
   message?: string;
   fields?: Record<string, string[] | string>;
   non_field_errors?: string[];
+  [key: string]: unknown;
 };
 
 const flattenFieldErrors = (fields: Record<string, string[] | string>) =>
@@ -29,6 +30,20 @@ export const parseApiErrorPayload = (payload: unknown): string | null => {
   }
   if (data.fields && typeof data.fields === 'object') {
     const flattened = flattenFieldErrors(data.fields);
+    if (flattened) return flattened;
+  }
+  const metaKeys = new Set(['detail', 'error', 'message', 'fields', 'non_field_errors']);
+  const directFields = Object.entries(data).filter(([key, value]) => {
+    if (metaKeys.has(key)) return false;
+    return typeof value === 'string' || Array.isArray(value);
+  });
+  if (directFields.length > 0) {
+    const flattened = directFields
+      .flatMap(([field, messages]) => {
+        const list = Array.isArray(messages) ? messages : [messages];
+        return list.filter(Boolean).map((message) => `${field}: ${message}`);
+      })
+      .join(' ');
     if (flattened) return flattened;
   }
   return null;

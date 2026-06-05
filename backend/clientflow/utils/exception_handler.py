@@ -18,6 +18,13 @@ def _extract_error_message(data):
             if isinstance(value, list) and value:
                 return value[0]
             return value
+        for value in data.values():
+            if isinstance(value, list) and value:
+                first = value[0]
+                if isinstance(first, str):
+                    return first
+            if isinstance(value, str):
+                return value
         return 'An error occurred'
     if isinstance(data, list) and data:
         first = data[0]
