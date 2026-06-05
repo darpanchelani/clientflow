@@ -1,7 +1,12 @@
 import React, { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Button,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControl,
   Grid,
   IconButton,
@@ -13,8 +18,13 @@ import {
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 
 import LeadDialog from '../components/crm/LeadDialog';
+import AITableInsightCell from '../components/ai/AITableInsightCell';
+import LeadScoreBadge from '../components/ai/LeadScoreBadge';
+import RelatedProposalsPanel from '../components/ai/proposals/RelatedProposalsPanel';
 import AppPageHeader from '../components/common/AppPageHeader';
 import AppTable, { AppTableColumn } from '../components/common/AppTable';
 import ConfirmDialog from '../components/common/ConfirmDialog';
@@ -30,7 +40,9 @@ import {
   useUpdateLeadStatusMutation,
 } from '../hooks/useLeads';
 import { useUrlFilters } from '../hooks/useUrlFilters';
+import { useBulkLeadScoreMutation } from '../hooks/useAI';
 import { Lead, LeadFormValues } from '../types/crm';
+import { LeadScoreResponse } from '../types/ai';
 import { extractCursor } from '../utils/pagination';
 import { getFriendlyErrorMessage } from '../utils/apiError';
 
@@ -56,11 +68,15 @@ const sourceOptions = [
 ];
 
 const LeadsPage = () => {
+  const navigate = useNavigate();
   const [urlFilters, setUrlFilters] = useUrlFilters({ search: '', status: '', source: '' });
   const [cursor, setCursor] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
+  const [proposalLead, setProposalLead] = useState<Lead | null>(null);
   const confirmDialog = useConfirmDialog();
+  const scoreMutation = useBulkLeadScoreMutation();
+  const [leadScores, setLeadScores] = useState<Record<number, LeadScoreResponse>>({});
 
   const filters = useMemo(
     () => ({ ...urlFilters, cursor }),
@@ -115,6 +131,16 @@ const LeadsPage = () => {
   const handleStatusChange = async (lead: Lead, nextStatus: string) => {
     if (lead.status === nextStatus) return;
     await statusMutation.mutateAsync({ id: lead.id, status: nextStatus });
+  };
+
+  const handleScoreLeads = async () => {
+    const response = await scoreMutation.mutateAsync({ lead_ids: leads.map((lead) => lead.id) });
+    const nextScores = response.results.reduce<Record<number, LeadScoreResponse>>((acc, result) => {
+      const leadId = Number(result.features?.lead_id);
+      if (leadId) acc[leadId] = result;
+      return acc;
+    }, {});
+    setLeadScores((current) => ({ ...current, ...nextScores }));
   };
 
   const columns: AppTableColumn<Lead>[] = [
@@ -173,6 +199,27 @@ const LeadsPage = () => {
       render: (lead) => lead.score,
     },
     {
+      id: 'aiScore',
+      label: 'AI Score',
+      render: (lead) => {
+        const score = leadScores[lead.id];
+        return (
+          <AITableInsightCell
+            badge={
+              <LeadScoreBadge
+                score={score?.score}
+                probability={score?.conversion_probability}
+                priority={score?.priority}
+                recommendation={score?.recommendation}
+                loading={scoreMutation.isLoading}
+              />
+            }
+            recommendation={score?.recommendation}
+          />
+        );
+      },
+    },
+    {
       id: 'tags',
       label: 'Tags',
       render: (lead) =>
@@ -200,6 +247,12 @@ const LeadsPage = () => {
       hideable: false,
       render: (lead) => (
         <Stack direction="row" justifyContent="flex-end">
+          <IconButton aria-label={`View proposals for ${lead.name}`} onClick={() => setProposalLead(lead)}>
+            <ArticleOutlinedIcon fontSize="small" />
+          </IconButton>
+          <IconButton aria-label={`Generate proposal for ${lead.name}`} onClick={() => navigate(`/proposals?generate=1&lead_id=${lead.id}`)}>
+            <AutoAwesomeIcon fontSize="small" />
+          </IconButton>
           <IconButton aria-label={`Edit ${lead.name}`} onClick={() => openEditDialog(lead)}>
             <EditIcon fontSize="small" />
           </IconButton>
@@ -217,9 +270,14 @@ const LeadsPage = () => {
         title="Leads"
         description="Manage prospects, track status changes, and keep the pipeline moving."
         actions={
-          <Button variant="contained" onClick={openCreateDialog}>
-            New Lead
-          </Button>
+          <Stack direction="row" spacing={1}>
+            <Button variant="outlined" onClick={handleScoreLeads} disabled={scoreMutation.isLoading || leads.length === 0}>
+              {scoreMutation.isLoading ? 'Scoring...' : 'Score Leads'}
+            </Button>
+            <Button variant="contained" onClick={openCreateDialog}>
+              New Lead
+            </Button>
+          </Stack>
         }
       />
 
@@ -318,6 +376,22 @@ const LeadsPage = () => {
         onClose={closeDialog}
         onSubmit={handleSave}
       />
+
+      <Dialog open={Boolean(proposalLead)} onClose={() => setProposalLead(null)} fullWidth maxWidth="md">
+        <DialogTitle>{proposalLead ? `${proposalLead.name} Proposals` : 'Lead Proposals'}</DialogTitle>
+        <DialogContent dividers>
+          {proposalLead ? (
+            <RelatedProposalsPanel
+              title="Lead Proposals"
+              leadId={proposalLead.id}
+              compact={false}
+            />
+          ) : null}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setProposalLead(null)}>Close</Button>
+        </DialogActions>
+      </Dialog>
 
       <ConfirmDialog {...confirmDialog.dialogProps} />
     </Stack>

@@ -4,6 +4,7 @@ import { queryKeys } from '../constants/queryKeys';
 import {
   approveProposal,
   archiveProposal,
+  bulkScoreLeads,
   deleteInsight,
   deleteProposal,
   generateInsights,
@@ -14,6 +15,7 @@ import {
   getLeadScore,
   getPaymentRisk,
   getPaymentRisks,
+  getProposal,
   getProposals,
   getRevenueForecast,
   markAllInsightsRead,
@@ -32,24 +34,25 @@ import {
 
 export const useRevenueForecast = (filters: Record<string, string> = {}) =>
   useQuery(queryKeys.aiRevenueForecast(filters), () => getRevenueForecast(filters), {
-    staleTime: 60 * 1000,
+    staleTime: 10 * 60 * 1000,
     refetchInterval: 2 * 60 * 1000,
   });
 
 export const useAIInsights = (filters: AIInsightFilters = {}) =>
   useQuery(queryKeys.aiInsights(filters), () => getInsights(filters), {
     keepPreviousData: true,
-    staleTime: 30 * 1000,
+    staleTime: 2 * 60 * 1000,
   });
 
 export const usePaymentRisks = (filters: AIPredictionFilters = {}) =>
   useQuery(queryKeys.aiPaymentRisks(filters), () => getPaymentRisks(filters), {
     keepPreviousData: true,
+    staleTime: 5 * 60 * 1000,
   });
 
 export const useClientHealth = (filters: Record<string, string> = {}) =>
   useQuery(queryKeys.aiClientHealth(filters), () => getClientHealth(filters), {
-    staleTime: 60 * 1000,
+    staleTime: 5 * 60 * 1000,
   });
 
 export const useProposals = (filters: AIProposalFilters = {}) =>
@@ -57,14 +60,30 @@ export const useProposals = (filters: AIProposalFilters = {}) =>
     keepPreviousData: true,
   });
 
+export const useProposal = (id?: number, enabled = true) =>
+  useQuery(queryKeys.aiProposal(id), () => getProposal(id as number), {
+    enabled: Boolean(id) && enabled,
+  });
+
 export const useLeadScore = (leadId?: number, enabled = true) =>
   useQuery(queryKeys.aiLeadScore(leadId), () => getLeadScore(leadId as number), {
     enabled: Boolean(leadId) && enabled,
+    staleTime: 5 * 60 * 1000,
   });
+
+export const useBulkLeadScoreMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation((payload: { lead_ids?: number[] } = {}) => bulkScoreLeads(payload), {
+    onSuccess: () => {
+      queryClient.invalidateQueries('ai-lead-score');
+    },
+  });
+};
 
 export const usePaymentRisk = (invoiceId?: number, enabled = true) =>
   useQuery(queryKeys.aiPaymentRisk(invoiceId), () => getPaymentRisk(invoiceId as number), {
     enabled: Boolean(invoiceId) && enabled,
+    staleTime: 5 * 60 * 1000,
   });
 
 export const useClientChurnRisk = (clientId?: number, enabled = true) =>
@@ -160,7 +179,10 @@ export const useDeleteInsightMutation = () => {
 export const useGenerateProposalMutation = () => {
   const queryClient = useQueryClient();
   return useMutation((payload: GenerateProposalPayload) => generateProposal(payload), {
-    onSuccess: () => queryClient.invalidateQueries('ai-proposals'),
+    onSuccess: () => {
+      queryClient.invalidateQueries('ai-proposals');
+      queryClient.invalidateQueries('ai-proposal');
+    },
   });
 };
 
@@ -170,7 +192,10 @@ export const useUpdateProposalMutation = () => {
     ({ id, payload }: { id: number; payload: Partial<ProposalDraft> }) =>
       updateProposal(id, payload),
     {
-      onSuccess: () => queryClient.invalidateQueries('ai-proposals'),
+      onSuccess: (proposal) => {
+        queryClient.invalidateQueries('ai-proposals');
+        queryClient.invalidateQueries(queryKeys.aiProposal(proposal.id));
+      },
     }
   );
 };
@@ -178,20 +203,29 @@ export const useUpdateProposalMutation = () => {
 export const useDeleteProposalMutation = () => {
   const queryClient = useQueryClient();
   return useMutation(deleteProposal, {
-    onSuccess: () => queryClient.invalidateQueries('ai-proposals'),
+    onSuccess: (id) => {
+      queryClient.invalidateQueries('ai-proposals');
+      queryClient.removeQueries(queryKeys.aiProposal(id));
+    },
   });
 };
 
 export const useApproveProposalMutation = () => {
   const queryClient = useQueryClient();
   return useMutation(approveProposal, {
-    onSuccess: () => queryClient.invalidateQueries('ai-proposals'),
+    onSuccess: (proposal) => {
+      queryClient.invalidateQueries('ai-proposals');
+      queryClient.invalidateQueries(queryKeys.aiProposal(proposal.id));
+    },
   });
 };
 
 export const useArchiveProposalMutation = () => {
   const queryClient = useQueryClient();
   return useMutation(archiveProposal, {
-    onSuccess: () => queryClient.invalidateQueries('ai-proposals'),
+    onSuccess: (proposal) => {
+      queryClient.invalidateQueries('ai-proposals');
+      queryClient.invalidateQueries(queryKeys.aiProposal(proposal.id));
+    },
   });
 };

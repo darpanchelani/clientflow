@@ -1,4 +1,4 @@
-import React, { FormEvent, useState } from 'react';
+import React, { FormEvent, useEffect, useState } from 'react';
 import {
   Alert,
   Autocomplete,
@@ -24,8 +24,11 @@ import ProposalPreviewDialog from './ProposalPreviewDialog';
 
 interface ProposalGeneratorProps {
   onGenerate: (payload: GenerateProposalPayload) => Promise<ProposalDraft>;
-  onApprove: (id: number) => void;
-  onArchive: (id: number) => void;
+  onApprove: (id: number) => Promise<ProposalDraft>;
+  onArchive: (id: number) => Promise<ProposalDraft>;
+  initialLeadId?: number;
+  initialClientId?: number;
+  initialProjectId?: number;
   isGenerating?: boolean;
   approveLoading?: boolean;
   archiveLoading?: boolean;
@@ -76,6 +79,9 @@ const ProposalGenerator = ({
   onGenerate,
   onApprove,
   onArchive,
+  initialLeadId,
+  initialClientId,
+  initialProjectId,
   isGenerating,
   approveLoading,
   archiveLoading,
@@ -94,8 +100,41 @@ const ProposalGenerator = ({
   const clientsQuery = useClientsQuery({});
   const projectsQuery = useProjectsQuery({});
 
+  useEffect(() => {
+    if (!initialLeadId || selectedLead || !leadsQuery.data?.results) return;
+    const lead = leadsQuery.data.results.find((item) => item.id === initialLeadId);
+    if (lead) setSelectedLead(lead);
+  }, [initialLeadId, leadsQuery.data?.results, selectedLead]);
+
+  useEffect(() => {
+    if (!initialClientId || selectedClient || !clientsQuery.data?.results) return;
+    const client = clientsQuery.data.results.find((item) => item.id === initialClientId);
+    if (client) setSelectedClient(client);
+  }, [initialClientId, clientsQuery.data?.results, selectedClient]);
+
+  useEffect(() => {
+    if (!initialProjectId || selectedProject || !projectsQuery.data?.results) return;
+    const project = projectsQuery.data.results.find((item) => item.id === initialProjectId);
+    if (project) setSelectedProject(project);
+  }, [initialProjectId, projectsQuery.data?.results, selectedProject]);
+
   const updateField = (field: keyof GenerateProposalPayload, value: string | boolean | number | null) => {
     setForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const resetGenerator = () => {
+    setForm(initialForm);
+    setClientError('');
+    setSubmitError(null);
+    setProposal(null);
+    setSelectedLead(null);
+    setSelectedClient(null);
+    setSelectedProject(null);
+  };
+
+  const closePreviewAndReset = () => {
+    setPreviewOpen(false);
+    resetGenerator();
   };
 
   const handleSubmit = async (event: FormEvent) => {
@@ -124,6 +163,26 @@ const ProposalGenerator = ({
       const draft = await onGenerate(payload);
       setProposal(draft);
       setPreviewOpen(true);
+    } catch (requestError) {
+      setSubmitError(requestError);
+    }
+  };
+
+  const handleApprove = async (id: number) => {
+    setSubmitError(null);
+    try {
+      await onApprove(id);
+      closePreviewAndReset();
+    } catch (requestError) {
+      setSubmitError(requestError);
+    }
+  };
+
+  const handleArchive = async (id: number) => {
+    setSubmitError(null);
+    try {
+      await onArchive(id);
+      closePreviewAndReset();
     } catch (requestError) {
       setSubmitError(requestError);
     }
@@ -314,12 +373,12 @@ const ProposalGenerator = ({
       <ProposalPreviewDialog
         open={previewOpen}
         proposal={proposal}
-        onClose={() => setPreviewOpen(false)}
-        onApprove={onApprove}
-        onArchive={onArchive}
+        onClose={closePreviewAndReset}
+        onApprove={handleApprove}
+        onArchive={handleArchive}
         approveLoading={approveLoading}
         archiveLoading={archiveLoading}
-        error={actionError}
+        error={submitError || actionError}
       />
     </AppCard>
   );

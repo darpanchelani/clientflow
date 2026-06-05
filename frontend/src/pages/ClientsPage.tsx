@@ -1,7 +1,12 @@
 import React, { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Button,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControl,
   Grid,
   IconButton,
@@ -13,8 +18,13 @@ import {
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 
 import ClientDialog from '../components/crm/ClientDialog';
+import AITableInsightCell from '../components/ai/AITableInsightCell';
+import ClientHealthBadge from '../components/ai/ClientHealthBadge';
+import RelatedProposalsPanel from '../components/ai/proposals/RelatedProposalsPanel';
 import AppPageHeader from '../components/common/AppPageHeader';
 import AppTable, { AppTableColumn } from '../components/common/AppTable';
 import ConfirmDialog from '../components/common/ConfirmDialog';
@@ -29,6 +39,8 @@ import {
   useUpdateClientMutation,
 } from '../hooks/useClients';
 import { useUrlFilters } from '../hooks/useUrlFilters';
+import { useClientHealth } from '../hooks/useAI';
+import { ClientHealthResponse } from '../types/ai';
 import { Client, ClientFormValues } from '../types/crm';
 import { extractCursor } from '../utils/pagination';
 import { getFriendlyErrorMessage } from '../utils/apiError';
@@ -41,20 +53,30 @@ const statusOptions = [
 ];
 
 const ClientsPage = () => {
+  const navigate = useNavigate();
   const [urlFilters, setUrlFilters] = useUrlFilters({ search: '', status: '' });
   const [cursor, setCursor] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [proposalClient, setProposalClient] = useState<Client | null>(null);
   const confirmDialog = useConfirmDialog();
 
   const filters = useMemo(() => ({ ...urlFilters, cursor }), [urlFilters, cursor]);
 
   const query = useClientsQuery(filters);
+  const clientHealthQuery = useClientHealth({});
   const createMutation = useCreateClientMutation();
   const updateMutation = useUpdateClientMutation();
   const deleteMutation = useDeleteClientMutation();
 
   const clients = query.data?.results ?? [];
+  const healthByClientId = useMemo(() => {
+    return (clientHealthQuery.data?.results ?? []).reduce<Record<number, ClientHealthResponse>>((acc, item) => {
+      const clientId = Number(item.features?.client_id);
+      if (clientId) acc[clientId] = item;
+      return acc;
+    }, {});
+  }, [clientHealthQuery.data?.results]);
   const nextCursor = extractCursor(query.data?.next);
 
   const openCreateDialog = () => {
@@ -110,6 +132,27 @@ const ClientsPage = () => {
       render: (client) => <span style={{ textTransform: 'capitalize' }}>{client.status}</span>,
     },
     {
+      id: 'aiHealth',
+      label: 'AI Health',
+      render: (client) => {
+        const health = healthByClientId[client.id];
+        return (
+          <AITableInsightCell
+            badge={
+              <ClientHealthBadge
+                healthScore={health?.health_score}
+                churnScore={health?.churn_score}
+                riskLevel={health?.risk_level}
+                recommendation={health?.retention_recommendation}
+                loading={clientHealthQuery.isLoading}
+              />
+            }
+            recommendation={health?.retention_recommendation}
+          />
+        );
+      },
+    },
+    {
       id: 'tags',
       label: 'Tags',
       render: (client) =>
@@ -137,6 +180,12 @@ const ClientsPage = () => {
       hideable: false,
       render: (client) => (
         <Stack direction="row" justifyContent="flex-end">
+          <IconButton aria-label={`View proposals for ${client.name}`} onClick={() => setProposalClient(client)}>
+            <ArticleOutlinedIcon fontSize="small" />
+          </IconButton>
+          <IconButton aria-label={`Generate proposal for ${client.name}`} onClick={() => navigate(`/proposals?generate=1&client_id=${client.id}`)}>
+            <AutoAwesomeIcon fontSize="small" />
+          </IconButton>
           <IconButton
             aria-label={`Edit ${client.name}`}
             onClick={() => {
@@ -253,6 +302,22 @@ const ClientsPage = () => {
         onClose={closeDialog}
         onSubmit={handleSave}
       />
+
+      <Dialog open={Boolean(proposalClient)} onClose={() => setProposalClient(null)} fullWidth maxWidth="md">
+        <DialogTitle>{proposalClient ? `${proposalClient.name} Proposals` : 'Client Proposals'}</DialogTitle>
+        <DialogContent dividers>
+          {proposalClient ? (
+            <RelatedProposalsPanel
+              title="Client Proposals"
+              clientId={proposalClient.id}
+              compact={false}
+            />
+          ) : null}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setProposalClient(null)}>Close</Button>
+        </DialogActions>
+      </Dialog>
 
       <ConfirmDialog {...confirmDialog.dialogProps} />
     </Stack>

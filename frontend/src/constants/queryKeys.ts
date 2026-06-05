@@ -23,6 +23,7 @@ export const queryKeys = {
   aiPaymentRisks: (filters: unknown) => ['ai-payment-risks', filters] as const,
   aiClientHealth: (filters: unknown) => ['ai-client-health', filters] as const,
   aiProposals: (filters: unknown) => ['ai-proposals', filters] as const,
+  aiProposal: (id: number | undefined) => ['ai-proposal', id] as const,
   aiLeadScore: (id: number | undefined) => ['ai-lead-score', id] as const,
   aiPaymentRisk: (id: number | undefined) => ['ai-payment-risk', id] as const,
   aiClientChurnRisk: (id: number | undefined) => ['ai-client-churn-risk', id] as const,

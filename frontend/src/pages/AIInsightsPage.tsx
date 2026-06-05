@@ -7,24 +7,20 @@ import AISummaryCards from '../components/ai/AISummaryCards';
 import BusinessInsightsPanel from '../components/ai/BusinessInsightsPanel';
 import ClientHealthCard from '../components/ai/ClientHealthCard';
 import PaymentRiskCard from '../components/ai/PaymentRiskCard';
-import ProposalGenerator from '../components/ai/ProposalGenerator';
 import RevenueForecastChart from '../components/ai/RevenueForecastChart';
 import AppCard from '../components/common/AppCard';
 import AppPageHeader from '../components/common/AppPageHeader';
 import {
   useAIInsights,
-  useApproveProposalMutation,
-  useArchiveProposalMutation,
   useClientHealth,
   useDeleteInsightMutation,
   useGenerateInsightsMutation,
-  useGenerateProposalMutation,
   useMarkAllInsightsReadMutation,
   useMarkInsightReadMutation,
   usePaymentRisks,
   useRevenueForecast,
 } from '../hooks/useAI';
-import { AIInsightFilters, AIRecommendation, GenerateProposalPayload, ProposalDraft } from '../types/ai';
+import { AIInsightFilters, AIRecommendation } from '../types/ai';
 import { getFriendlyErrorMessage } from '../utils/apiError';
 
 const AIInsightsPage = () => {
@@ -37,9 +33,6 @@ const AIInsightsPage = () => {
   const markReadMutation = useMarkInsightReadMutation();
   const markAllReadMutation = useMarkAllInsightsReadMutation();
   const deleteInsightMutation = useDeleteInsightMutation();
-  const generateProposalMutation = useGenerateProposalMutation();
-  const approveProposalMutation = useApproveProposalMutation();
-  const archiveProposalMutation = useArchiveProposalMutation();
 
   const insights = useMemo(() => insightsQuery.data?.results ?? [], [insightsQuery.data?.results]);
   const paymentRisks = paymentRisksQuery.data ?? [];
@@ -62,10 +55,6 @@ const AIInsightsPage = () => {
         })),
     [insights]
   );
-
-  const handleGenerateProposal = async (payload: GenerateProposalPayload): Promise<ProposalDraft> => {
-    return generateProposalMutation.mutateAsync(payload);
-  };
 
   return (
     <Stack spacing={3}>
@@ -168,16 +157,6 @@ const AIInsightsPage = () => {
         )}
       </AppCard>
 
-      <ProposalGenerator
-        onGenerate={handleGenerateProposal}
-        onApprove={(id) => approveProposalMutation.mutate(id)}
-        onArchive={(id) => archiveProposalMutation.mutate(id)}
-        isGenerating={generateProposalMutation.isLoading}
-        approveLoading={approveProposalMutation.isLoading}
-        archiveLoading={archiveProposalMutation.isLoading}
-        error={generateProposalMutation.error}
-        actionError={approveProposalMutation.error || archiveProposalMutation.error}
-      />
     </Stack>
   );
 };

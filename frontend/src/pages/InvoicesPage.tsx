@@ -16,6 +16,8 @@ import DeleteIcon from '@mui/icons-material/Delete';
 
 import InvoiceDialog from '../components/billing/InvoiceDialog';
 import InvoiceStatusBadge from '../components/billing/InvoiceStatusBadge';
+import AITableInsightCell from '../components/ai/AITableInsightCell';
+import PaymentRiskBadge from '../components/ai/PaymentRiskBadge';
 import AppPageHeader from '../components/common/AppPageHeader';
 import AppTable, { AppTableColumn } from '../components/common/AppTable';
 import ConfirmDialog from '../components/common/ConfirmDialog';
@@ -31,7 +33,9 @@ import {
   useUpdateInvoiceMutation,
 } from '../hooks/useInvoices';
 import { useProjectsQuery } from '../hooks/useProjects';
+import { usePaymentRisks } from '../hooks/useAI';
 import { useUrlFilters } from '../hooks/useUrlFilters';
+import { AIPrediction } from '../types/ai';
 import { Invoice, InvoiceFormValues } from '../types/billing';
 import { extractCursor } from '../utils/pagination';
 import { getFriendlyErrorMessage } from '../utils/apiError';
@@ -58,6 +62,7 @@ const InvoicesPage = () => {
   const query = useInvoicesQuery(filters);
   const clientsQuery = useClientsQuery({});
   const projectsQuery = useProjectsQuery({});
+  const paymentRisksQuery = usePaymentRisks({});
   const createMutation = useCreateInvoiceMutation();
   const updateMutation = useUpdateInvoiceMutation();
   const deleteMutation = useDeleteInvoiceMutation();
@@ -67,6 +72,12 @@ const InvoicesPage = () => {
   const prevCursor = extractCursor(query.data?.previous);
   const clients = clientsQuery.data?.results ?? [];
   const projects = projectsQuery.data?.results ?? [];
+  const paymentRiskByInvoiceId = useMemo(() => {
+    return (paymentRisksQuery.data ?? []).reduce<Record<number, AIPrediction>>((acc, prediction) => {
+      acc[prediction.entity_id] = prediction;
+      return acc;
+    }, {});
+  }, [paymentRisksQuery.data]);
 
   const dialogClients = useMemo(() => {
     if (!editingInvoice?.client) return clients;
@@ -112,6 +123,28 @@ const InvoicesPage = () => {
       id: 'status',
       label: 'Status',
       render: (invoice) => <InvoiceStatusBadge status={invoice.status} />,
+    },
+    {
+      id: 'paymentRisk',
+      label: 'AI Risk',
+      render: (invoice) => {
+        const prediction = paymentRiskByInvoiceId[invoice.id];
+        const result = prediction?.result ?? {};
+        return (
+          <AITableInsightCell
+            badge={
+              <PaymentRiskBadge
+                riskScore={prediction?.score}
+                riskLevel={String(result.risk_level ?? '')}
+                delayProbability={result.delay_probability as number | string | null | undefined}
+                recommendation={String(result.recommendation ?? prediction?.explanation ?? '')}
+                loading={paymentRisksQuery.isLoading}
+              />
+            }
+            recommendation={String(result.recommendation ?? '')}
+          />
+        );
+      },
     },
     {
       id: 'total',

@@ -21,6 +21,7 @@ import KpiCard from '../components/dashboard/KpiCard';
 import LeadFunnelChart from '../components/dashboard/LeadFunnelChart';
 import DashboardSkeleton from '../components/skeletons/DashboardSkeleton';
 import { useAutomationDashboardSummaryQuery } from '../hooks/useAutomation';
+import { useAIInsights, useClientHealth, usePaymentRisks, useRevenueForecast } from '../hooks/useAI';
 import { useDashboardQuery } from '../hooks/useDashboard';
 import { getFriendlyErrorMessage } from '../utils/apiError';
 
@@ -30,8 +31,17 @@ const formatCurrency = (value: number) =>
 const DashboardPage = () => {
   const query = useDashboardQuery();
   const automationQuery = useAutomationDashboardSummaryQuery();
+  const insightsQuery = useAIInsights({});
+  const paymentRisksQuery = usePaymentRisks({});
+  const clientHealthQuery = useClientHealth({});
+  const revenueForecastQuery = useRevenueForecast({});
   const stats = query.data;
   const automation = automationQuery.data;
+  const criticalInsightsCount = (insightsQuery.data?.results ?? []).filter((insight) =>
+    ['critical', 'high'].includes(insight.severity)
+  ).length;
+  const highRiskInvoicesCount = (paymentRisksQuery.data ?? []).filter((risk) => Number(risk.score ?? 0) >= 70).length;
+  const atRiskClientsCount = (clientHealthQuery.data?.results ?? []).filter((client) => client.risk_level !== 'low').length;
 
   return (
     <Stack spacing={3}>
@@ -98,6 +108,44 @@ const DashboardPage = () => {
                 </Grid>
               </Grid>
             ) : null}
+
+            <AppCard
+              title="AI Summary"
+              subtitle="Current risk signals and recommendations from ClientFlow AI."
+              action={
+                <Button component={RouterLink} to="/ai-insights" size="small" endIcon={<ArrowForwardIcon />}>
+                  Open AI Insights
+                </Button>
+              }
+            >
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6} md={2.4}>
+                  <KpiCard label="Critical insights" value={criticalInsightsCount} hint="High-priority AI alerts" accent="#dc2626" />
+                </Grid>
+                <Grid item xs={12} sm={6} md={2.4}>
+                  <KpiCard label="High-risk invoices" value={highRiskInvoicesCount} hint="Payment risk >= 70" accent="#ea580c" />
+                </Grid>
+                <Grid item xs={12} sm={6} md={2.4}>
+                  <KpiCard label="At-risk clients" value={atRiskClientsCount} hint="Watch or at-risk health" accent="#f59e0b" />
+                </Grid>
+                <Grid item xs={12} sm={6} md={2.4}>
+                  <KpiCard
+                    label="High-priority leads"
+                    value={stats.recentLeads.filter((lead) => lead.score >= 75).length}
+                    hint="Recent lead score >= 75"
+                    accent="#0f9d8a"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6} md={2.4}>
+                  <KpiCard
+                    label="Revenue trend"
+                    value={revenueForecastQuery.data?.trend_direction ?? 'flat'}
+                    hint={revenueForecastQuery.isError ? 'AI unavailable' : 'Forecast direction'}
+                    accent="#2563eb"
+                  />
+                </Grid>
+              </Grid>
+            </AppCard>
 
             <Grid container spacing={2}>
               <Grid item xs={12} md={8}>

@@ -35,6 +35,7 @@ const navItems = [
   { label: 'Payments', path: '/payments' },
   { label: 'Analytics', path: '/analytics' },
   { label: 'AI Insights', path: '/ai-insights' },
+  { label: 'Proposals', path: '/proposals' },
   { label: 'Executive', path: '/executive' },
   { label: 'Reports', path: '/reports' },
   { label: 'Follow-ups', path: '/follow-ups' },

@@ -15,6 +15,8 @@ import {
 import InvoiceDialog from '../components/billing/InvoiceDialog';
 import InvoiceStatusBadge from '../components/billing/InvoiceStatusBadge';
 import PaymentHistory from '../components/billing/PaymentHistory';
+import AIInlineRecommendation from '../components/ai/AIInlineRecommendation';
+import PaymentRiskBadge from '../components/ai/PaymentRiskBadge';
 import AppCard from '../components/common/AppCard';
 import AppPageHeader from '../components/common/AppPageHeader';
 import ConfirmDialog from '../components/common/ConfirmDialog';
@@ -31,6 +33,7 @@ import {
 } from '../hooks/useInvoices';
 import { useCreatePaymentMutation, useVerifyPaymentMutation } from '../hooks/usePayments';
 import { useProjectsQuery } from '../hooks/useProjects';
+import { usePaymentRisk } from '../hooks/useAI';
 import { InvoiceFormValues, Payment } from '../types/billing';
 import { getFriendlyErrorMessage } from '../utils/apiError';
 
@@ -42,6 +45,7 @@ const InvoiceDetailPage = () => {
   const confirmDialog = useConfirmDialog();
 
   const invoiceQuery = useInvoiceQuery(Number.isNaN(invoiceId) ? undefined : invoiceId);
+  const paymentRiskQuery = usePaymentRisk(Number.isNaN(invoiceId) ? undefined : invoiceId, !Number.isNaN(invoiceId));
   const paymentsQuery = useInvoicePaymentsQuery(Number.isNaN(invoiceId) ? undefined : invoiceId);
   const clientsQuery = useClientsQuery({});
   const projectsQuery = useProjectsQuery({});
@@ -200,6 +204,33 @@ const InvoiceDetailPage = () => {
                   Delete
                 </Button>
               </Stack>
+            </AppCard>
+
+            <AppCard title="AI Payment Risk" subtitle="Payment delay prediction based on invoice and client payment history.">
+              {paymentRiskQuery.isError ? (
+                <AIInlineRecommendation
+                  title="AI unavailable"
+                  recommendation="Payment risk could not be calculated right now. Manual invoice workflows are still available."
+                  severity="warning"
+                  compact
+                />
+              ) : paymentRiskQuery.isLoading ? (
+                <PaymentRiskBadge loading />
+              ) : paymentRiskQuery.data ? (
+                <Stack spacing={2}>
+                  <PaymentRiskBadge
+                    riskScore={paymentRiskQuery.data.risk_score}
+                    riskLevel={paymentRiskQuery.data.risk_level}
+                    delayProbability={paymentRiskQuery.data.delay_probability}
+                    recommendation={paymentRiskQuery.data.recommendation}
+                  />
+                  <AIInlineRecommendation
+                    title={paymentRiskQuery.data.explanation}
+                    recommendation={paymentRiskQuery.data.recommendation}
+                    severity={paymentRiskQuery.data.risk_level === 'high' ? 'high' : paymentRiskQuery.data.risk_level === 'medium' ? 'warning' : 'info'}
+                  />
+                </Stack>
+              ) : null}
             </AppCard>
 
             <AppCard title="Line items">

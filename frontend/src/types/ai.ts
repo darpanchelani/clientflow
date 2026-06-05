@@ -196,6 +196,7 @@ export interface AIInsightFilters {
 }
 
 export interface AIProposalFilters {
+  search?: string;
   status?: string;
   proposal_type?: string;
   lead_id?: string;

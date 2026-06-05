@@ -15,6 +15,8 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 import ProjectDialog from '../components/projects/ProjectDialog';
+import AIInlineRecommendation from '../components/ai/AIInlineRecommendation';
+import AppCard from '../components/common/AppCard';
 import AppPageHeader from '../components/common/AppPageHeader';
 import AppTable, { AppTableColumn } from '../components/common/AppTable';
 import ConfirmDialog from '../components/common/ConfirmDialog';
@@ -30,6 +32,7 @@ import {
   useUpdateProjectMutation,
 } from '../hooks/useProjects';
 import { useUrlFilters } from '../hooks/useUrlFilters';
+import { useAIInsights } from '../hooks/useAI';
 import { Project, ProjectFormValues } from '../types/projects';
 import { extractCursor } from '../utils/pagination';
 import { getFriendlyErrorMessage } from '../utils/apiError';
@@ -60,6 +63,7 @@ const ProjectsPage = () => {
   const filters = useMemo(() => ({ ...urlFilters, cursor }), [urlFilters, cursor]);
 
   const query = useProjectsQuery(filters);
+  const projectInsightsQuery = useAIInsights({ category: 'project' });
   const clientQuery = useClientsQuery({});
   const createMutation = useCreateProjectMutation();
   const updateMutation = useUpdateProjectMutation();
@@ -254,6 +258,26 @@ const ProjectsPage = () => {
           />
         </Grid>
       </FilterBar>
+
+      <AppCard title="AI Project Signals" subtitle="Project recommendations generated from current delivery data.">
+        {projectInsightsQuery.isError ? (
+          <AIInlineRecommendation title="AI unavailable" recommendation="Project insights could not be loaded. Project management remains available." severity="warning" compact />
+        ) : (projectInsightsQuery.data?.results ?? []).length === 0 ? (
+          <AIInlineRecommendation title="No project risks detected" recommendation="Generate insights from AI Insights to refresh project recommendations." severity="info" compact />
+        ) : (
+          <Stack spacing={1}>
+            {(projectInsightsQuery.data?.results ?? []).slice(0, 3).map((insight) => (
+              <AIInlineRecommendation
+                key={insight.id}
+                title={insight.title}
+                recommendation={insight.recommendation || insight.description}
+                severity={insight.severity}
+                compact
+              />
+            ))}
+          </Stack>
+        )}
+      </AppCard>
 
       <QueryState
         isLoading={query.isLoading && !query.data}

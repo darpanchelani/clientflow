@@ -18,8 +18,8 @@ interface ProposalPreviewDialogProps {
   open: boolean;
   proposal: ProposalDraft | null;
   onClose: () => void;
-  onApprove: (id: number) => void;
-  onArchive: (id: number) => void;
+  onApprove: (id: number) => void | Promise<void>;
+  onArchive: (id: number) => void | Promise<void>;
   approveLoading?: boolean;
   archiveLoading?: boolean;
   error?: unknown;
@@ -73,13 +73,13 @@ const ProposalPreviewDialog = ({
         <Button onClick={handleCopy} startIcon={<ContentCopyIcon />} disabled={!proposal?.generated_content}>
           Copy
         </Button>
-        <Button onClick={() => proposal && onArchive(proposal.id)} disabled={!proposal || archiveLoading}>
+        <Button onClick={() => proposal && onArchive(proposal.id)} disabled={!proposal || archiveLoading || approveLoading}>
           {archiveLoading ? 'Archiving...' : 'Archive'}
         </Button>
-        <Button variant="contained" onClick={() => proposal && onApprove(proposal.id)} disabled={!proposal || approveLoading}>
+        <Button variant="contained" onClick={() => proposal && onApprove(proposal.id)} disabled={!proposal || approveLoading || archiveLoading}>
           {approveLoading ? 'Approving...' : 'Approve'}
         </Button>
-        <Button onClick={onClose}>Close</Button>
+        <Button onClick={onClose} disabled={approveLoading || archiveLoading}>Cancel</Button>
       </DialogActions>
     </Dialog>
   );

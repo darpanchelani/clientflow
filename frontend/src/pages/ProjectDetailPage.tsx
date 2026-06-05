@@ -8,17 +8,18 @@ import {
   Grid,
   InputLabel,
   MenuItem,
-  Paper,
   Select,
   Stack,
 } from '@mui/material';
 
+import AIInlineRecommendation from '../components/ai/AIInlineRecommendation';
 import AppCard from '../components/common/AppCard';
 import AppPageHeader from '../components/common/AppPageHeader';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import EmptyState from '../components/common/EmptyState';
 import FilterBar from '../components/common/FilterBar';
 import QueryState from '../components/common/QueryState';
+import RelatedProposalsPanel from '../components/ai/proposals/RelatedProposalsPanel';
 import TaskBoard from '../components/projects/TaskBoard';
 import TaskDialog from '../components/projects/TaskDialog';
 import BoardSkeleton from '../components/skeletons/BoardSkeleton';
@@ -32,6 +33,7 @@ import {
   useUpdateTaskStatusMutation,
 } from '../hooks/useTasks';
 import { useUsersQuery } from '../hooks/useUsers';
+import { useAIInsights } from '../hooks/useAI';
 import { Task, TaskFormValues } from '../types/projects';
 import { getFriendlyErrorMessage } from '../utils/apiError';
 
@@ -47,6 +49,7 @@ const ProjectDetailPage = () => {
 
   const projectQuery = useProjectQuery(Number.isNaN(projectId) ? undefined : projectId);
   const usersQuery = useUsersQuery();
+  const projectInsightsQuery = useAIInsights({ category: 'project' });
 
   const taskFilters = useMemo(
     () => ({
@@ -67,6 +70,9 @@ const ProjectDetailPage = () => {
   const users = usersQuery.data ?? [];
   const board = boardQuery.data;
   const selectedProject = projectQuery.data;
+  const projectInsights = (projectInsightsQuery.data?.results ?? []).filter(
+    (insight) => !insight.source_id || insight.source_id === projectId
+  );
   const totalTasks = board
     ? board.todo.length + board.in_progress.length + board.review.length + board.done.length
     : 0;
@@ -150,6 +156,34 @@ const ProjectDetailPage = () => {
           </Grid>
         </AppCard>
       ) : null}
+
+      {selectedProject ? (
+        <RelatedProposalsPanel
+          title="Project Proposals"
+          projectId={selectedProject.id}
+          clientId={selectedProject.client.id}
+        />
+      ) : null}
+
+      <AppCard title="AI Delivery Recommendations" subtitle="Signals detected from project and task activity.">
+        {projectInsightsQuery.isError ? (
+          <AIInlineRecommendation title="AI unavailable" recommendation="Project recommendations could not be loaded right now." severity="warning" compact />
+        ) : projectInsights.length === 0 ? (
+          <AIInlineRecommendation title="No project-specific recommendation" recommendation="Generate latest insights to refresh delivery recommendations." severity="info" compact />
+        ) : (
+          <Stack spacing={1}>
+            {projectInsights.slice(0, 3).map((insight) => (
+              <AIInlineRecommendation
+                key={insight.id}
+                title={insight.title}
+                recommendation={insight.recommendation || insight.description}
+                severity={insight.severity}
+                compact
+              />
+            ))}
+          </Stack>
+        )}
+      </AppCard>
 
       <FilterBar>
         <Grid item xs={12} md={4}>

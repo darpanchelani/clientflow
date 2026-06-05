@@ -21,6 +21,7 @@ import AnalyticsPage from './pages/AnalyticsPage';
 import ExecutiveDashboardPage from './pages/ExecutiveDashboardPage';
 import ReportsPage from './pages/ReportsPage';
 import AIInsightsPage from './pages/AIInsightsPage';
+import ProposalsPage from './pages/ProposalsPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 // Components
@@ -191,6 +192,17 @@ function App() {
           <ProtectedRoute>
             <Layout>
               <AIInsightsPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/proposals"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <ProposalsPage />
             </Layout>
           </ProtectedRoute>
         }
