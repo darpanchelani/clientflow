@@ -10,4 +10,12 @@ export const queryKeys = {
   invoicePayments: (id: number) => ['invoice-payments', id] as const,
   payments: (filters: unknown) => ['payments', filters] as const,
   dashboard: ['dashboard'] as const,
+  notifications: (filters: unknown) => ['notifications', filters] as const,
+  notificationUnreadCount: ['notification-unread-count'] as const,
+  workflowRules: ['workflow-rules'] as const,
+  automationPreferences: ['automation-preferences'] as const,
+  followUps: (filters: unknown) => ['follow-ups', filters] as const,
+  activityFeed: (filters: unknown) => ['activity-feed', filters] as const,
+  automationDashboardSummary: ['automation-dashboard-summary'] as const,
+  analyticsDashboard: (filters: unknown) => ['analytics-dashboard', filters] as const,
 };

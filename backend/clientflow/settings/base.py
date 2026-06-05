@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'clientflow.apps.invoices.apps.InvoicesConfig',
     'clientflow.apps.payments.apps.PaymentsConfig',
     'clientflow.apps.notifications.apps.NotificationsConfig',
+    'clientflow.apps.automation.apps.AutomationConfig',
     'clientflow.apps.ai_engine',
     'clientflow.apps.analytics',
     'clientflow.apps.integrations',
@@ -145,6 +146,7 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.JSONRenderer',
     ),
     'EXCEPTION_HANDLER': 'clientflow.utils.exception_handler.custom_exception_handler',
+    'URL_FORMAT_OVERRIDE': None,
 }
 
 SIMPLE_JWT = {
@@ -174,6 +176,16 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_TIME_LIMIT = 30 * 60
 CELERY_TASK_SOFT_TIME_LIMIT = 25 * 60
+CELERY_BEAT_SCHEDULE = {
+    'workflow-automation-every-hour': {
+        'task': 'clientflow.apps.automation.tasks.run_workflow_automation',
+        'schedule': 60 * 60,
+    },
+    'invoice-reminders-every-morning': {
+        'task': 'clientflow.apps.automation.tasks.check_invoice_reminders',
+        'schedule': 24 * 60 * 60,
+    },
+}
 
 CACHES = {
     'default': {

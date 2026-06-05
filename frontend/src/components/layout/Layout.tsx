@@ -18,6 +18,7 @@ import {
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 
+import NotificationBell from '../notifications/NotificationBell';
 import { useAppDispatch } from '../../store';
 import { logout } from '../../store/slices/authSlice';
 
@@ -32,6 +33,12 @@ const navItems = [
   { label: 'Projects', path: '/projects' },
   { label: 'Invoices', path: '/invoices' },
   { label: 'Payments', path: '/payments' },
+  { label: 'Analytics', path: '/analytics' },
+  { label: 'Executive', path: '/executive' },
+  { label: 'Reports', path: '/reports' },
+  { label: 'Follow-ups', path: '/follow-ups' },
+  { label: 'Activity', path: '/activity' },
+  { label: 'Automation', path: '/automation' },
 ];
 
 const Layout = ({ children }: LayoutProps) => {
@@ -97,6 +104,7 @@ const Layout = ({ children }: LayoutProps) => {
           ) : (
             <Box sx={{ flexGrow: 1 }} />
           )}
+          <NotificationBell />
           <Button variant="outlined" size="small" onClick={handleLogout}>
             Logout
           </Button>

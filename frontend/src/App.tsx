@@ -14,6 +14,12 @@ import ProjectDetailPage from './pages/ProjectDetailPage';
 import InvoicesPage from './pages/InvoicesPage';
 import InvoiceDetailPage from './pages/InvoiceDetailPage';
 import PaymentsPage from './pages/PaymentsPage';
+import FollowUpsPage from './pages/FollowUpsPage';
+import ActivityFeedPage from './pages/ActivityFeedPage';
+import AutomationSettingsPage from './pages/AutomationSettingsPage';
+import AnalyticsPage from './pages/AnalyticsPage';
+import ExecutiveDashboardPage from './pages/ExecutiveDashboardPage';
+import ReportsPage from './pages/ReportsPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 // Components
@@ -129,6 +135,72 @@ function App() {
           <ProtectedRoute>
             <Layout>
               <PaymentsPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/follow-ups"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <FollowUpsPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/activity"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <ActivityFeedPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/automation"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <AutomationSettingsPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/analytics"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <AnalyticsPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/executive"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <ExecutiveDashboardPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/reports"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <ReportsPage />
             </Layout>
           </ProtectedRoute>
         }

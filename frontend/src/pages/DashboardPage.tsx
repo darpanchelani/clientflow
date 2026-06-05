@@ -20,6 +20,7 @@ import QueryState from '../components/common/QueryState';
 import KpiCard from '../components/dashboard/KpiCard';
 import LeadFunnelChart from '../components/dashboard/LeadFunnelChart';
 import DashboardSkeleton from '../components/skeletons/DashboardSkeleton';
+import { useAutomationDashboardSummaryQuery } from '../hooks/useAutomation';
 import { useDashboardQuery } from '../hooks/useDashboard';
 import { getFriendlyErrorMessage } from '../utils/apiError';
 
@@ -28,7 +29,9 @@ const formatCurrency = (value: number) =>
 
 const DashboardPage = () => {
   const query = useDashboardQuery();
+  const automationQuery = useAutomationDashboardSummaryQuery();
   const stats = query.data;
+  const automation = automationQuery.data;
 
   return (
     <Stack spacing={3}>
@@ -75,6 +78,26 @@ const DashboardPage = () => {
                 />
               </Grid>
             </Grid>
+
+            {automation ? (
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6} md={2.4}>
+                  <KpiCard label="Overdue invoices" value={automation.overdue_invoices} hint="Needs billing action" accent="#dc2626" />
+                </Grid>
+                <Grid item xs={12} sm={6} md={2.4}>
+                  <KpiCard label="Upcoming tasks" value={automation.upcoming_tasks} hint="Due within 24 hours" accent="#2563eb" />
+                </Grid>
+                <Grid item xs={12} sm={6} md={2.4}>
+                  <KpiCard label="Pending follow-ups" value={automation.pending_follow_ups} hint={`${automation.overdue_follow_ups} overdue`} accent="#0f9d8a" />
+                </Grid>
+                <Grid item xs={12} sm={6} md={2.4}>
+                  <KpiCard label="Active projects" value={automation.active_projects} hint="Owned by you" accent="#7c3aed" />
+                </Grid>
+                <Grid item xs={12} sm={6} md={2.4}>
+                  <KpiCard label="Revenue" value={formatCurrency(Number(automation.revenue_summary))} hint="Paid invoices" accent="#ea580c" />
+                </Grid>
+              </Grid>
+            ) : null}
 
             <Grid container spacing={2}>
               <Grid item xs={12} md={8}>
