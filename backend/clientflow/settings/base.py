@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     'clientflow.apps.payments.apps.PaymentsConfig',
     'clientflow.apps.notifications.apps.NotificationsConfig',
     'clientflow.apps.automation.apps.AutomationConfig',
-    'clientflow.apps.ai_engine',
+    'clientflow.apps.ai_engine.apps.AiEngineConfig',
     'clientflow.apps.analytics',
     'clientflow.apps.integrations',
 ]
@@ -185,6 +185,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'clientflow.apps.automation.tasks.check_invoice_reminders',
         'schedule': 24 * 60 * 60,
     },
+    'daily-business-insights': {
+        'task': 'clientflow.apps.ai_engine.tasks.generate_daily_business_insights',
+        'schedule': 24 * 60 * 60,
+    },
 }
 
 CACHES = {
@@ -208,6 +212,10 @@ EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() == 'true'
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@clientflow.io')
+
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
+OPENAI_MODEL = os.getenv('OPENAI_MODEL', 'gpt-4o-mini')
+AI_PROPOSAL_PROVIDER = os.getenv('AI_PROPOSAL_PROVIDER', 'template')
 
 LOGGING = {
     'version': 1,

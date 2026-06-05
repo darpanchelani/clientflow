@@ -1,0 +1,195 @@
+from rest_framework import status
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.viewsets import ModelViewSet
+
+from clientflow.apps.crm.utils import get_scope_key
+from clientflow.apps.clients.models import Client
+from clientflow.apps.invoices.models import Invoice
+from clientflow.apps.leads.models import Lead
+
+from .models import AIInsight, AIPrediction, ProposalDraft
+from .serializers import (
+    AIInsightSerializer,
+    AIPredictionSerializer,
+    InsightGenerateSerializer,
+    ProposalDraftSerializer,
+    ProposalGenerateSerializer,
+)
+from .services.churn_prediction_service import score_client_churn_risk
+from .services.insight_service import generate_insights_for_user, list_insights_for_user, mark_all_read
+from .services.lead_scoring_service import score_lead
+from .services.payment_risk_service import score_invoice_payment_risk
+from .services.proposal_generation_service import generate_proposal
+from .services.revenue_forecast_service import forecast_revenue
+
+
+class AIPredictionViewSet(ModelViewSet):
+    serializer_class = AIPredictionSerializer
+    permission_classes = [IsAuthenticated]
+    filterset_fields = ['entity_type', 'entity_id', 'prediction_type']
+    search_fields = ['explanation']
+    ordering_fields = ['created_at', 'score', 'probability', 'confidence']
+    ordering = ['-created_at']
+
+    def get_queryset(self):
+        return AIPrediction.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class AIInsightViewSet(ModelViewSet):
+    serializer_class = AIInsightSerializer
+    permission_classes = [IsAuthenticated]
+    filterset_fields = ['category', 'severity', 'is_read']
+    search_fields = ['title', 'description', 'recommendation']
+    ordering_fields = ['created_at', 'severity']
+    ordering = ['-created_at']
+
+    def get_queryset(self):
+        return list_insights_for_user(self.request.user, self.request.query_params)
+
+    def get_serializer_class(self):
+        if self.action == 'generate':
+            return InsightGenerateSerializer
+        return AIInsightSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    @action(detail=False, methods=['post'], url_path='generate')
+    def generate(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        result = generate_insights_for_user(request.user)
+        return Response({
+            'created_count': result['created_count'],
+            'count': result['count'],
+            'results': AIInsightSerializer(result['results'], many=True).data,
+        }, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['patch'], url_path='read')
+    def read(self, request, pk=None):
+        insight = self.get_object()
+        insight.is_read = True
+        insight.save(update_fields=['is_read', 'updated_at'])
+        return Response(AIInsightSerializer(insight).data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['patch'], url_path='mark-all-read')
+    def mark_all_read(self, request):
+        updated = mark_all_read(request.user)
+        return Response({'updated': updated}, status=status.HTTP_200_OK)
+
+
+class ProposalDraftViewSet(ModelViewSet):
+    serializer_class = ProposalDraftSerializer
+    permission_classes = [IsAuthenticated]
+    filterset_fields = ['status', 'proposal_type', 'client_id', 'lead_id', 'project_id']
+    search_fields = ['title', 'generated_content']
+    ordering_fields = ['created_at', 'updated_at', 'status']
+    ordering = ['-created_at']
+
+    def get_queryset(self):
+        return ProposalDraft.objects.filter(user=self.request.user)
+
+    def get_serializer_class(self):
+        if self.action == 'generate':
+            return ProposalGenerateSerializer
+        return ProposalDraftSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    @action(detail=False, methods=['post'], url_path='generate')
+    def generate(self, request):
+        serializer = self.get_serializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        return Response(generate_proposal(user=request.user, validated_data=serializer.validated_data), status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'], url_path='approve')
+    def approve(self, request, pk=None):
+        proposal = self.get_object()
+        proposal.status = ProposalDraft.Status.APPROVED
+        proposal.save(update_fields=['status', 'updated_at'])
+        return Response(ProposalDraftSerializer(proposal).data)
+
+    @action(detail=True, methods=['post'], url_path='archive')
+    def archive(self, request, pk=None):
+        proposal = self.get_object()
+        proposal.status = ProposalDraft.Status.ARCHIVED
+        proposal.save(update_fields=['status', 'updated_at'])
+        return Response(ProposalDraftSerializer(proposal).data)
+
+
+class LeadScoreView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        lead = Lead.objects.filter(pk=pk, organization_name=get_scope_key(request.user)).first()
+        if not lead:
+            return Response({'detail': 'Lead not found.'}, status=404)
+        return Response(score_lead(lead=lead, user=request.user))
+
+
+class BulkLeadScoreView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        scope = get_scope_key(request.user)
+        lead_ids = request.data.get('lead_ids') or []
+        queryset = Lead.objects.filter(organization_name=scope)
+        if lead_ids:
+            queryset = queryset.filter(id__in=lead_ids)
+        results = [score_lead(lead=lead, user=request.user) for lead in queryset[:100]]
+        return Response({'count': len(results), 'results': results})
+
+
+class InvoicePaymentRiskView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        invoice = Invoice.objects.filter(pk=pk, organization_name=get_scope_key(request.user)).select_related('client').first()
+        if not invoice:
+            return Response({'detail': 'Invoice not found.'}, status=404)
+        return Response(score_invoice_payment_risk(invoice=invoice, user=request.user))
+
+
+class PaymentRiskListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        predictions = AIPrediction.objects.filter(
+            user=request.user,
+            entity_type=AIPrediction.EntityType.INVOICE,
+            prediction_type=AIPrediction.PredictionType.PAYMENT_RISK,
+        )
+        return Response(AIPredictionSerializer(predictions, many=True).data)
+
+
+class ClientChurnRiskView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        client = Client.objects.filter(pk=pk, organization_name=get_scope_key(request.user)).first()
+        if not client:
+            return Response({'detail': 'Client not found.'}, status=404)
+        return Response(score_client_churn_risk(client=client, user=request.user))
+
+
+class ClientHealthListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        clients = Client.objects.filter(organization_name=get_scope_key(request.user)).order_by('-updated_at')[:100]
+        results = [score_client_churn_risk(client=client, user=request.user) for client in clients]
+        return Response({'count': len(results), 'results': results})
+
+
+class RevenueForecastView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response(forecast_revenue(user=request.user))

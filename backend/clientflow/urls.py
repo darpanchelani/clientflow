@@ -23,6 +23,7 @@ urlpatterns = [
     path('api/notifications/', include('clientflow.apps.notifications.urls', namespace='notifications')),
     path('api/automation/', include('clientflow.apps.automation.urls', namespace='automation')),
     path('api/analytics/', include('clientflow.apps.analytics.urls', namespace='analytics-api')),
+    path('api/ai/', include('clientflow.apps.ai_engine.urls', namespace='ai')),
     path('api/v1/invoices/', include('clientflow.apps.invoices.urls', namespace='invoices-v1')),
     path('api/v1/payments/', include('clientflow.apps.payments.urls', namespace='payments-v1')),
     path('api/v1/analytics/', include('clientflow.apps.analytics.urls', namespace='analytics')),
