@@ -18,4 +18,12 @@ export const queryKeys = {
   activityFeed: (filters: unknown) => ['activity-feed', filters] as const,
   automationDashboardSummary: ['automation-dashboard-summary'] as const,
   analyticsDashboard: (filters: unknown) => ['analytics-dashboard', filters] as const,
+  aiRevenueForecast: (filters: unknown) => ['ai-revenue-forecast', filters] as const,
+  aiInsights: (filters: unknown) => ['ai-insights', filters] as const,
+  aiPaymentRisks: (filters: unknown) => ['ai-payment-risks', filters] as const,
+  aiClientHealth: (filters: unknown) => ['ai-client-health', filters] as const,
+  aiProposals: (filters: unknown) => ['ai-proposals', filters] as const,
+  aiLeadScore: (id: number | undefined) => ['ai-lead-score', id] as const,
+  aiPaymentRisk: (id: number | undefined) => ['ai-payment-risk', id] as const,
+  aiClientChurnRisk: (id: number | undefined) => ['ai-client-churn-risk', id] as const,
 };

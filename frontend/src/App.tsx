@@ -20,6 +20,7 @@ import AutomationSettingsPage from './pages/AutomationSettingsPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import ExecutiveDashboardPage from './pages/ExecutiveDashboardPage';
 import ReportsPage from './pages/ReportsPage';
+import AIInsightsPage from './pages/AIInsightsPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 // Components
@@ -179,6 +180,17 @@ function App() {
           <ProtectedRoute>
             <Layout>
               <AnalyticsPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/ai-insights"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <AIInsightsPage />
             </Layout>
           </ProtectedRoute>
         }
