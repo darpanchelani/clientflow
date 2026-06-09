@@ -6,6 +6,7 @@ import { ProposalDraft } from '../../../types/ai';
 const statusColor: Record<ProposalDraft['status'], ChipProps['color']> = {
   draft: 'info',
   approved: 'success',
+  sent: 'success',
   archived: 'warning',
 };
 

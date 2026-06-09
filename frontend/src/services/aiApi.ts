@@ -14,6 +14,7 @@ import {
   PaginatedResponse,
   PaymentRiskResponse,
   ProposalDraft,
+  ProposalSendPayload,
   RevenueForecastResponse,
 } from '../types/ai';
 
@@ -135,5 +136,17 @@ export const approveProposal = async (id: number) => {
 
 export const archiveProposal = async (id: number) => {
   const response = await api.post<ProposalDraft>(`/ai/proposals/${id}/archive/`);
+  return response.data;
+};
+
+export const downloadProposalPdf = async (id: number) => {
+  const response = await api.get<Blob>(`/ai/proposals/${id}/download/`, {
+    responseType: 'blob',
+  });
+  return response.data;
+};
+
+export const sendProposal = async (id: number, payload: ProposalSendPayload) => {
+  const response = await api.post<ProposalDraft>(`/ai/proposals/${id}/send/`, payload);
   return response.data;
 };

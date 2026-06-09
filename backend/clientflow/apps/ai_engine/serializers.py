@@ -87,6 +87,10 @@ class ProposalDraftSerializer(serializers.ModelSerializer):
             'services_offered',
             'client_problem',
             'proposed_solution',
+            'sent_at',
+            'sent_to_email',
+            'last_downloaded_at',
+            'download_count',
             'source',
             'created_at',
             'updated_at',
@@ -99,6 +103,10 @@ class ProposalDraftSerializer(serializers.ModelSerializer):
             'lead_summary',
             'client_summary',
             'project_summary',
+            'sent_at',
+            'sent_to_email',
+            'last_downloaded_at',
+            'download_count',
             'created_at',
             'updated_at',
         )
@@ -201,3 +209,10 @@ class ProposalGenerateSerializer(serializers.Serializer):
             attrs.setdefault('client', project.client)
 
         return attrs
+
+
+class ProposalSendSerializer(serializers.Serializer):
+    to_email = serializers.EmailField()
+    subject = serializers.CharField(max_length=255)
+    message = serializers.CharField(required=False, allow_blank=True, default='')
+    attach_pdf = serializers.BooleanField(required=False, default=True)

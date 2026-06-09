@@ -9,6 +9,8 @@ import {
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import DownloadIcon from '@mui/icons-material/Download';
+import SendIcon from '@mui/icons-material/Send';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 import { ProposalDraft } from '../../../types/ai';
@@ -19,8 +21,12 @@ interface ProposalActionsProps {
   approveLoading?: boolean;
   archiveLoading?: boolean;
   deleteLoading?: boolean;
+  downloadLoading?: boolean;
+  sendLoading?: boolean;
   onView: (proposal: ProposalDraft) => void;
   onEdit: (proposal: ProposalDraft) => void;
+  onDownload: (proposal: ProposalDraft) => void;
+  onSend: (proposal: ProposalDraft) => void;
   onApprove: (proposal: ProposalDraft) => void;
   onArchive: (proposal: ProposalDraft) => void;
   onDelete: (proposal: ProposalDraft) => void;
@@ -36,8 +42,12 @@ const ProposalActions = ({
   approveLoading,
   archiveLoading,
   deleteLoading,
+  downloadLoading,
+  sendLoading,
   onView,
   onEdit,
+  onDownload,
+  onSend,
   onApprove,
   onArchive,
   onDelete,
@@ -62,6 +72,8 @@ const ProposalActions = ({
       <MenuItem onClick={() => { setAnchorEl(null); onView(proposal); }}>View</MenuItem>
       <MenuItem onClick={() => { setAnchorEl(null); onEdit(proposal); }}>Edit</MenuItem>
       <MenuItem onClick={() => { setAnchorEl(null); handleCopy(); }}>{copied ? 'Copied' : 'Copy'}</MenuItem>
+      <MenuItem disabled={downloadLoading} onClick={() => { setAnchorEl(null); onDownload(proposal); }}>Download PDF</MenuItem>
+      <MenuItem disabled={sendLoading || proposal.status === 'archived'} onClick={() => { setAnchorEl(null); onSend(proposal); }}>Send to Client</MenuItem>
       {proposal.status !== 'approved' ? (
         <MenuItem disabled={approveLoading} onClick={() => { setAnchorEl(null); onApprove(proposal); }}>Approve</MenuItem>
       ) : null}
@@ -93,6 +105,20 @@ const ProposalActions = ({
         <IconButton size="small" aria-label={`Copy ${proposal.title}`} onClick={handleCopy}>
           <ContentCopyIcon fontSize="small" />
         </IconButton>
+      </Tooltip>
+      <Tooltip title="Download PDF">
+        <span>
+          <IconButton size="small" aria-label={`Download ${proposal.title}`} disabled={downloadLoading} onClick={() => onDownload(proposal)}>
+            <DownloadIcon fontSize="small" />
+          </IconButton>
+        </span>
+      </Tooltip>
+      <Tooltip title={proposal.status === 'archived' ? 'Archived proposals cannot be sent' : 'Send to client'}>
+        <span>
+          <IconButton size="small" aria-label={`Send ${proposal.title}`} disabled={sendLoading || proposal.status === 'archived'} onClick={() => onSend(proposal)}>
+            <SendIcon fontSize="small" />
+          </IconButton>
+        </span>
       </Tooltip>
       {proposal.status !== 'approved' ? (
         <Button size="small" disabled={approveLoading} onClick={() => onApprove(proposal)}>Approve</Button>

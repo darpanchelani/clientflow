@@ -106,6 +106,7 @@ class ProposalDraft(models.Model):
     class Status(models.TextChoices):
         DRAFT = 'draft', 'Draft'
         APPROVED = 'approved', 'Approved'
+        SENT = 'sent', 'Sent'
         ARCHIVED = 'archived', 'Archived'
 
     class ProposalType(models.TextChoices):
@@ -149,6 +150,10 @@ class ProposalDraft(models.Model):
     services_offered = models.TextField(blank=True, default='')
     client_problem = models.TextField(blank=True, default='')
     proposed_solution = models.TextField(blank=True, default='')
+    sent_at = models.DateTimeField(null=True, blank=True)
+    sent_to_email = models.EmailField(blank=True, default='')
+    last_downloaded_at = models.DateTimeField(null=True, blank=True)
+    download_count = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

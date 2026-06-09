@@ -7,13 +7,16 @@ import {
   useApproveProposalMutation,
   useArchiveProposalMutation,
   useDeleteProposalMutation,
+  useDownloadProposalPdfMutation,
   useProposals,
+  useSendProposalMutation,
   useUpdateProposalMutation,
 } from '../../../hooks/useAI';
-import { ProposalDraft } from '../../../types/ai';
+import { ProposalDraft, ProposalSendPayload } from '../../../types/ai';
 import ProposalDetailDialog from './ProposalDetailDialog';
 import ProposalEditDialog from './ProposalEditDialog';
 import ProposalList from './ProposalList';
+import SendProposalDialog from './SendProposalDialog';
 
 interface RelatedProposalsPanelProps {
   leadId?: number;
@@ -41,8 +44,11 @@ const RelatedProposalsPanel = ({
   const archiveMutation = useArchiveProposalMutation();
   const deleteMutation = useDeleteProposalMutation();
   const updateMutation = useUpdateProposalMutation();
+  const downloadMutation = useDownloadProposalPdfMutation();
+  const sendMutation = useSendProposalMutation();
   const [viewingProposal, setViewingProposal] = useState<ProposalDraft | null>(null);
   const [editingProposal, setEditingProposal] = useState<ProposalDraft | null>(null);
+  const [sendingProposal, setSendingProposal] = useState<ProposalDraft | null>(null);
 
   const proposals = proposalsQuery.data?.results ?? [];
   const generateParams = new URLSearchParams({ generate: '1' });
@@ -54,6 +60,13 @@ const RelatedProposalsPanel = ({
     if (!editingProposal) return;
     await updateMutation.mutateAsync({ id: editingProposal.id, payload });
     setEditingProposal(null);
+  };
+
+  const handleSend = async (payload: ProposalSendPayload) => {
+    if (!sendingProposal) return;
+    const updated = await sendMutation.mutateAsync({ id: sendingProposal.id, payload });
+    setSendingProposal(null);
+    setViewingProposal(updated);
   };
 
   return (
@@ -78,8 +91,12 @@ const RelatedProposalsPanel = ({
           approveLoading={approveMutation.isLoading}
           archiveLoading={archiveMutation.isLoading}
           deleteLoading={deleteMutation.isLoading}
+          downloadLoading={downloadMutation.isLoading}
+          sendLoading={sendMutation.isLoading}
           onView={setViewingProposal}
           onEdit={setEditingProposal}
+          onDownload={(proposal) => downloadMutation.mutate(proposal.id)}
+          onSend={setSendingProposal}
           onApprove={(proposal) => approveMutation.mutate(proposal.id)}
           onArchive={(proposal) => archiveMutation.mutate(proposal.id)}
           onDelete={(proposal) => deleteMutation.mutate(proposal.id)}
@@ -91,11 +108,15 @@ const RelatedProposalsPanel = ({
         approveLoading={approveMutation.isLoading}
         archiveLoading={archiveMutation.isLoading}
         deleteLoading={deleteMutation.isLoading}
+        downloadLoading={downloadMutation.isLoading}
+        sendLoading={sendMutation.isLoading}
         onClose={() => setViewingProposal(null)}
         onEdit={(proposal) => {
           setViewingProposal(null);
           setEditingProposal(proposal);
         }}
+        onDownload={(proposal) => downloadMutation.mutate(proposal.id)}
+        onSend={setSendingProposal}
         onApprove={(proposal) => approveMutation.mutate(proposal.id)}
         onArchive={(proposal) => archiveMutation.mutate(proposal.id)}
         onDelete={(proposal) => {
@@ -110,6 +131,14 @@ const RelatedProposalsPanel = ({
         error={updateMutation.error}
         onClose={() => setEditingProposal(null)}
         onSubmit={handleUpdate}
+      />
+      <SendProposalDialog
+        open={Boolean(sendingProposal)}
+        proposal={sendingProposal}
+        loading={sendMutation.isLoading}
+        error={sendMutation.error}
+        onClose={() => setSendingProposal(null)}
+        onSubmit={handleSend}
       />
     </AppCard>
   );

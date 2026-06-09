@@ -15,10 +15,14 @@ interface ProposalListProps {
   approveLoading?: boolean;
   archiveLoading?: boolean;
   deleteLoading?: boolean;
+  downloadLoading?: boolean;
+  sendLoading?: boolean;
   onRetry?: () => void;
   onGenerate?: () => void;
   onView: (proposal: ProposalDraft) => void;
   onEdit: (proposal: ProposalDraft) => void;
+  onDownload: (proposal: ProposalDraft) => void;
+  onSend: (proposal: ProposalDraft) => void;
   onApprove: (proposal: ProposalDraft) => void;
   onArchive: (proposal: ProposalDraft) => void;
   onDelete: (proposal: ProposalDraft) => void;
@@ -33,10 +37,14 @@ const ProposalList = ({
   approveLoading,
   archiveLoading,
   deleteLoading,
+  downloadLoading,
+  sendLoading,
   onRetry,
   onGenerate,
   onView,
   onEdit,
+  onDownload,
+  onSend,
   onApprove,
   onArchive,
   onDelete,
@@ -73,8 +81,12 @@ const ProposalList = ({
           approveLoading={approveLoading}
           archiveLoading={archiveLoading}
           deleteLoading={deleteLoading}
+          downloadLoading={downloadLoading}
+          sendLoading={sendLoading}
           onView={onView}
           onEdit={onEdit}
+          onDownload={onDownload}
+          onSend={onSend}
           onApprove={onApprove}
           onArchive={onArchive}
           onDelete={onDelete}

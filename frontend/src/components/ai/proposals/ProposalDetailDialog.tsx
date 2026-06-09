@@ -21,8 +21,12 @@ interface ProposalDetailDialogProps {
   approveLoading?: boolean;
   archiveLoading?: boolean;
   deleteLoading?: boolean;
+  downloadLoading?: boolean;
+  sendLoading?: boolean;
   onClose: () => void;
   onEdit: (proposal: ProposalDraft) => void;
+  onDownload: (proposal: ProposalDraft) => void;
+  onSend: (proposal: ProposalDraft) => void;
   onApprove: (proposal: ProposalDraft) => void;
   onArchive: (proposal: ProposalDraft) => void;
   onDelete: (proposal: ProposalDraft) => void;
@@ -41,8 +45,12 @@ const ProposalDetailDialog = ({
   approveLoading,
   archiveLoading,
   deleteLoading,
+  downloadLoading,
+  sendLoading,
   onClose,
   onEdit,
+  onDownload,
+  onSend,
   onApprove,
   onArchive,
   onDelete,
@@ -78,6 +86,14 @@ const ProposalDetailDialog = ({
               <Typography color="text.secondary">Updated {new Date(proposal.updated_at).toLocaleString()}</Typography>
             </Stack>
             <Typography color="text.secondary">{relationLine(proposal)}</Typography>
+            <Stack spacing={0.5}>
+              <Typography color="text.secondary">Sent to: {proposal.sent_to_email || 'Not sent'}</Typography>
+              <Typography color="text.secondary">Sent date: {proposal.sent_at ? new Date(proposal.sent_at).toLocaleString() : '—'}</Typography>
+              <Typography color="text.secondary">Downloads: {proposal.download_count ?? 0}</Typography>
+              <Typography color="text.secondary">
+                Last downloaded: {proposal.last_downloaded_at ? new Date(proposal.last_downloaded_at).toLocaleString() : '—'}
+              </Typography>
+            </Stack>
             <Divider />
             <Typography
               component="pre"
@@ -97,6 +113,12 @@ const ProposalDetailDialog = ({
       </DialogContent>
       <DialogActions>
         <Button onClick={handleCopy} startIcon={<ContentCopyIcon />} disabled={!proposal}>Copy</Button>
+        <Button onClick={() => proposal && onDownload(proposal)} disabled={!proposal || downloadLoading}>
+          {downloadLoading ? 'Downloading...' : 'Download PDF'}
+        </Button>
+        <Button onClick={() => proposal && onSend(proposal)} disabled={!proposal || sendLoading || proposal?.status === 'archived'}>
+          {sendLoading ? 'Sending...' : 'Send to Client'}
+        </Button>
         <Button onClick={() => proposal && onEdit(proposal)} disabled={!proposal}>Edit</Button>
         {proposal?.status !== 'approved' ? (
           <Button onClick={() => proposal && onApprove(proposal)} disabled={!proposal || approveLoading}>

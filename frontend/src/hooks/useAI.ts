@@ -7,6 +7,7 @@ import {
   bulkScoreLeads,
   deleteInsight,
   deleteProposal,
+  downloadProposalPdf,
   generateInsights,
   generateProposal,
   getClientChurnRisk,
@@ -20,6 +21,7 @@ import {
   getRevenueForecast,
   markAllInsightsRead,
   markInsightRead,
+  sendProposal,
   updateProposal,
 } from '../services/aiApi';
 import {
@@ -30,6 +32,7 @@ import {
   GenerateProposalPayload,
   PaginatedResponse,
   ProposalDraft,
+  ProposalSendPayload,
 } from '../types/ai';
 
 export const useRevenueForecast = (filters: Record<string, string> = {}) =>
@@ -228,4 +231,45 @@ export const useArchiveProposalMutation = () => {
       queryClient.invalidateQueries(queryKeys.aiProposal(proposal.id));
     },
   });
+};
+
+const downloadBlob = (blob: Blob, filename: string) => {
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+};
+
+export const useDownloadProposalPdfMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation(
+    async (id: number) => {
+      const blob = await downloadProposalPdf(id);
+      downloadBlob(blob, `proposal-${id}.pdf`);
+      return id;
+    },
+    {
+      onSuccess: (id) => {
+        queryClient.invalidateQueries('ai-proposals');
+        queryClient.invalidateQueries(queryKeys.aiProposal(id));
+      },
+    }
+  );
+};
+
+export const useSendProposalMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation(
+    ({ id, payload }: { id: number; payload: ProposalSendPayload }) => sendProposal(id, payload),
+    {
+      onSuccess: (proposal) => {
+        queryClient.invalidateQueries('ai-proposals');
+        queryClient.invalidateQueries(queryKeys.aiProposal(proposal.id));
+      },
+    }
+  );
 };

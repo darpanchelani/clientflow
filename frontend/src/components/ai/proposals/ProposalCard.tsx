@@ -11,8 +11,12 @@ interface ProposalCardProps {
   approveLoading?: boolean;
   archiveLoading?: boolean;
   deleteLoading?: boolean;
+  downloadLoading?: boolean;
+  sendLoading?: boolean;
   onView: (proposal: ProposalDraft) => void;
   onEdit: (proposal: ProposalDraft) => void;
+  onDownload: (proposal: ProposalDraft) => void;
+  onSend: (proposal: ProposalDraft) => void;
   onApprove: (proposal: ProposalDraft) => void;
   onArchive: (proposal: ProposalDraft) => void;
   onDelete: (proposal: ProposalDraft) => void;
@@ -31,8 +35,12 @@ const ProposalCard = ({
   approveLoading,
   archiveLoading,
   deleteLoading,
+  downloadLoading,
+  sendLoading,
   onView,
   onEdit,
+  onDownload,
+  onSend,
   onApprove,
   onArchive,
   onDelete,
@@ -54,6 +62,16 @@ const ProposalCard = ({
                 {new Date(proposal.created_at).toLocaleString()}
               </Typography>
             </Stack>
+            {proposal.sent_to_email ? (
+              <Typography variant="body2" color="text.secondary">
+                Sent to {proposal.sent_to_email}{proposal.sent_at ? ` on ${new Date(proposal.sent_at).toLocaleString()}` : ''}
+              </Typography>
+            ) : null}
+            {proposal.download_count ? (
+              <Typography variant="body2" color="text.secondary">
+                Downloaded {proposal.download_count} time{proposal.download_count === 1 ? '' : 's'}
+              </Typography>
+            ) : null}
           </Stack>
           <ProposalActions
             proposal={proposal}
@@ -61,8 +79,12 @@ const ProposalCard = ({
             approveLoading={approveLoading}
             archiveLoading={archiveLoading}
             deleteLoading={deleteLoading}
+            downloadLoading={downloadLoading}
+            sendLoading={sendLoading}
             onView={onView}
             onEdit={onEdit}
+            onDownload={onDownload}
+            onSend={onSend}
             onApprove={onApprove}
             onArchive={onArchive}
             onDelete={onDelete}

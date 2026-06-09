@@ -1,3 +1,7 @@
+from django.db.models import F
+from django.http import HttpResponse
+from django.utils import timezone
+from rest_framework.exceptions import APIException, ValidationError
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -17,12 +21,15 @@ from .serializers import (
     InsightGenerateSerializer,
     ProposalDraftSerializer,
     ProposalGenerateSerializer,
+    ProposalSendSerializer,
 )
 from .services.churn_prediction_service import score_client_churn_risk
 from .services.insight_service import generate_insights_for_user, list_insights_for_user, mark_all_read
 from .services.lead_scoring_service import score_lead
 from .services.payment_risk_service import score_invoice_payment_risk
+from .services.proposal_email_service import send_proposal_email
 from .services.proposal_generation_service import generate_proposal
+from .services.proposal_pdf_service import generate_proposal_pdf
 from .services.revenue_forecast_service import forecast_revenue
 
 
@@ -98,6 +105,8 @@ class ProposalDraftViewSet(ModelViewSet):
     def get_serializer_class(self):
         if self.action == 'generate':
             return ProposalGenerateSerializer
+        if self.action == 'send':
+            return ProposalSendSerializer
         return ProposalDraftSerializer
 
     def perform_create(self, serializer):
@@ -122,6 +131,41 @@ class ProposalDraftViewSet(ModelViewSet):
         proposal.status = ProposalDraft.Status.ARCHIVED
         proposal.save(update_fields=['status', 'updated_at'])
         return Response(ProposalDraftSerializer(proposal).data)
+
+    @action(detail=True, methods=['get'], url_path='download')
+    def download(self, request, pk=None):
+        proposal = self.get_object()
+        try:
+            pdf_content = generate_proposal_pdf(proposal)
+        except Exception as exc:
+            raise APIException('Unable to generate proposal PDF.') from exc
+
+        ProposalDraft.objects.filter(pk=proposal.pk).update(
+            last_downloaded_at=timezone.now(),
+            download_count=F('download_count') + 1,
+        )
+        response = HttpResponse(pdf_content, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="proposal-{proposal.pk}.pdf"'
+        return response
+
+    @action(detail=True, methods=['post'], url_path='send')
+    def send(self, request, pk=None):
+        proposal = self.get_object()
+        if proposal.status == ProposalDraft.Status.ARCHIVED:
+            raise ValidationError({'detail': 'Archived proposals cannot be sent.'})
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            send_proposal_email(proposal=proposal, **serializer.validated_data)
+        except Exception as exc:
+            raise APIException('Unable to send proposal email.') from exc
+
+        proposal.status = ProposalDraft.Status.SENT
+        proposal.sent_at = timezone.now()
+        proposal.sent_to_email = serializer.validated_data['to_email']
+        proposal.save(update_fields=['status', 'sent_at', 'sent_to_email', 'updated_at'])
+        return Response(ProposalDraftSerializer(proposal).data, status=status.HTTP_200_OK)
 
 
 class LeadScoreView(APIView):

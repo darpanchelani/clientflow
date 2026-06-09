@@ -30,6 +30,7 @@ const ProposalFilters = ({ filters, onChange }: ProposalFiltersProps) => (
         <MenuItem value="">All</MenuItem>
         <MenuItem value="draft">Draft</MenuItem>
         <MenuItem value="approved">Approved</MenuItem>
+        <MenuItem value="sent">Sent</MenuItem>
         <MenuItem value="archived">Archived</MenuItem>
       </TextField>
     </Grid>

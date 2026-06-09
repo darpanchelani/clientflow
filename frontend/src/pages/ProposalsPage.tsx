@@ -8,18 +8,21 @@ import ProposalDetailDialog from '../components/ai/proposals/ProposalDetailDialo
 import ProposalEditDialog from '../components/ai/proposals/ProposalEditDialog';
 import ProposalFilters from '../components/ai/proposals/ProposalFilters';
 import ProposalList from '../components/ai/proposals/ProposalList';
+import SendProposalDialog from '../components/ai/proposals/SendProposalDialog';
 import AppCard from '../components/common/AppCard';
 import AppPageHeader from '../components/common/AppPageHeader';
 import {
   useApproveProposalMutation,
   useArchiveProposalMutation,
   useDeleteProposalMutation,
+  useDownloadProposalPdfMutation,
   useGenerateProposalMutation,
   useProposals,
+  useSendProposalMutation,
   useUpdateProposalMutation,
 } from '../hooks/useAI';
 import { useUrlFilters } from '../hooks/useUrlFilters';
-import { AIProposalFilters, GenerateProposalPayload, ProposalDraft } from '../types/ai';
+import { AIProposalFilters, GenerateProposalPayload, ProposalDraft, ProposalSendPayload } from '../types/ai';
 import { extractCursor } from '../utils/pagination';
 
 const proposalFilterDefaults = {
@@ -44,6 +47,7 @@ const ProposalsPage = () => {
   const [generatorOpen, setGeneratorOpen] = useState(searchParams.get('generate') === '1');
   const [viewingProposal, setViewingProposal] = useState<ProposalDraft | null>(null);
   const [editingProposal, setEditingProposal] = useState<ProposalDraft | null>(null);
+  const [sendingProposal, setSendingProposal] = useState<ProposalDraft | null>(null);
 
   const filters = useMemo<AIProposalFilters>(
     () => ({ ...urlFilters, cursor: cursor ?? undefined }),
@@ -56,6 +60,8 @@ const ProposalsPage = () => {
   const archiveMutation = useArchiveProposalMutation();
   const deleteMutation = useDeleteProposalMutation();
   const updateMutation = useUpdateProposalMutation();
+  const downloadMutation = useDownloadProposalPdfMutation();
+  const sendMutation = useSendProposalMutation();
 
   const proposals = proposalsQuery.data?.results ?? [];
   const nextCursor = extractCursor(proposalsQuery.data?.next);
@@ -109,6 +115,14 @@ const ProposalsPage = () => {
     await deleteMutation.mutateAsync(proposal.id);
     if (viewingProposal?.id === proposal.id) setViewingProposal(null);
     if (editingProposal?.id === proposal.id) setEditingProposal(null);
+    if (sendingProposal?.id === proposal.id) setSendingProposal(null);
+  };
+
+  const handleSend = async (payload: ProposalSendPayload) => {
+    if (!sendingProposal) return;
+    const updated = await sendMutation.mutateAsync({ id: sendingProposal.id, payload });
+    setSendingProposal(null);
+    setViewingProposal(updated);
   };
 
   return (
@@ -154,8 +168,12 @@ const ProposalsPage = () => {
           approveLoading={approveMutation.isLoading}
           archiveLoading={archiveMutation.isLoading}
           deleteLoading={deleteMutation.isLoading}
+          downloadLoading={downloadMutation.isLoading}
+          sendLoading={sendMutation.isLoading}
           onView={setViewingProposal}
           onEdit={setEditingProposal}
+          onDownload={(proposal) => downloadMutation.mutate(proposal.id)}
+          onSend={setSendingProposal}
           onApprove={(proposal) => approveMutation.mutate(proposal.id)}
           onArchive={(proposal) => archiveMutation.mutate(proposal.id)}
           onDelete={(proposal) => handleDelete(proposal)}
@@ -174,11 +192,15 @@ const ProposalsPage = () => {
         approveLoading={approveMutation.isLoading}
         archiveLoading={archiveMutation.isLoading}
         deleteLoading={deleteMutation.isLoading}
+        downloadLoading={downloadMutation.isLoading}
+        sendLoading={sendMutation.isLoading}
         onClose={() => setViewingProposal(null)}
         onEdit={(proposal) => {
           setViewingProposal(null);
           setEditingProposal(proposal);
         }}
+        onDownload={(proposal) => downloadMutation.mutate(proposal.id)}
+        onSend={setSendingProposal}
         onApprove={handleApprove}
         onArchive={handleArchive}
         onDelete={handleDelete}
@@ -191,6 +213,14 @@ const ProposalsPage = () => {
         error={updateMutation.error}
         onClose={() => setEditingProposal(null)}
         onSubmit={handleUpdate}
+      />
+      <SendProposalDialog
+        open={Boolean(sendingProposal)}
+        proposal={sendingProposal}
+        loading={sendMutation.isLoading}
+        error={sendMutation.error}
+        onClose={() => setSendingProposal(null)}
+        onSubmit={handleSend}
       />
     </Stack>
   );

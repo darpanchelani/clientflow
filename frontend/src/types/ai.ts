@@ -76,7 +76,7 @@ export interface ProposalDraft {
   } | null;
   title: string;
   generated_content: string;
-  status: 'draft' | 'approved' | 'archived';
+  status: 'draft' | 'approved' | 'sent' | 'archived';
   proposal_type: 'service' | 'project' | 'retainer' | 'custom';
   estimated_budget: string | null;
   estimated_timeline: string;
@@ -84,6 +84,10 @@ export interface ProposalDraft {
   client_problem: string;
   proposed_solution: string;
   source?: 'openai' | 'template';
+  sent_at?: string | null;
+  sent_to_email?: string | null;
+  last_downloaded_at?: string | null;
+  download_count?: number;
   created_at: string;
   updated_at: string;
 }
@@ -180,6 +184,13 @@ export interface GenerateProposalPayload {
   include_payment_terms?: boolean;
   include_timeline?: boolean;
   include_deliverables?: boolean;
+}
+
+export interface ProposalSendPayload {
+  to_email: string;
+  subject: string;
+  message?: string;
+  attach_pdf?: boolean;
 }
 
 export type GenerateProposalResponse = ProposalDraft & {
