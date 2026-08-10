@@ -161,7 +161,7 @@ const LeadsPage = () => {
       label: 'Company',
       sortable: true,
       getSortValue: (row) => row.company || '',
-      render: (lead) => lead.company || '—',
+      render: (lead) => lead.company || 'Not provided',
     },
     {
       id: 'source',
@@ -230,7 +230,7 @@ const LeadsPage = () => {
             ))}
           </Stack>
         ) : (
-          '—'
+          'Not converted'
         ),
     },
     {

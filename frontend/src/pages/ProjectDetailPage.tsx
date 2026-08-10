@@ -144,13 +144,13 @@ const ProjectDetailPage = () => {
             <Grid item xs={12} sm={6} md={2}>
               <Stack spacing={0.5}>
                 <span style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase' }}>Start</span>
-                <strong>{selectedProject.start_date || '—'}</strong>
+                <strong>{selectedProject.start_date || 'Not scheduled'}</strong>
               </Stack>
             </Grid>
             <Grid item xs={12} sm={6} md={2}>
               <Stack spacing={0.5}>
                 <span style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase' }}>End</span>
-                <strong>{selectedProject.end_date || '—'}</strong>
+                <strong>{selectedProject.end_date || 'Not scheduled'}</strong>
               </Stack>
             </Grid>
           </Grid>

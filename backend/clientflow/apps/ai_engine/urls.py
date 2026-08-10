@@ -4,6 +4,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     AIInsightViewSet,
     AIPredictionViewSet,
+    AIReportViewSet,
     BulkLeadScoreView,
     ClientChurnRiskView,
     ClientHealthListView,
@@ -20,6 +21,7 @@ router = DefaultRouter()
 router.register(r'predictions', AIPredictionViewSet, basename='prediction')
 router.register(r'insights', AIInsightViewSet, basename='insight')
 router.register(r'proposals', ProposalDraftViewSet, basename='proposal')
+router.register(r'reports', AIReportViewSet, basename='ai-report')
 
 urlpatterns = [
     path('leads/<int:pk>/score/', LeadScoreView.as_view(), name='lead-score'),

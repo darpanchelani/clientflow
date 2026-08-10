@@ -101,7 +101,7 @@ export const projectFormSchema = z
   .object({
     name: z.string().trim().min(1, 'Project name is required'),
     description: z.string().trim().optional(),
-    client_id: z.number({ error: 'Client is required' }).min(1, 'Client is required'),
+    client_id: z.number({ required_error: 'Client is required' }).min(1, 'Client is required'),
     status: oneOf(['active', 'paused', 'completed'], 'Select a valid status'),
     start_date: optionalDateSchema,
     end_date: optionalDateSchema,
@@ -141,7 +141,7 @@ export const invoiceItemSchema = z.object({
 
 export const invoiceFormSchema = z
   .object({
-    client_id: z.number({ error: 'Client is required' }).min(1, 'Client is required'),
+    client_id: z.number({ required_error: 'Client is required' }).min(1, 'Client is required'),
     project_id: z.number().positive().nullable().optional(),
     issue_date: requiredDateSchema,
     due_date: requiredDateSchema,

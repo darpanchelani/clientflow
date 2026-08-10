@@ -9,6 +9,7 @@ from clientflow.apps.users.serializers import UserProfileSerializer
 
 
 class RegisterSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(validators=[])
     password = serializers.CharField(write_only=True, min_length=8)
 
     class Meta:

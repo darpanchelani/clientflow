@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alert, AlertTitle, Button, Stack } from '@mui/material';
+import { Alert, AlertTitle, Button } from '@mui/material';
 
 import DashboardSkeleton from '../skeletons/DashboardSkeleton';
 import TableSkeleton from '../skeletons/TableSkeleton';

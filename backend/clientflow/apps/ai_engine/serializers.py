@@ -5,7 +5,7 @@ from clientflow.apps.crm.utils import get_scope_key
 from clientflow.apps.leads.models import Lead
 from clientflow.apps.projects.models import Project
 
-from .models import AIInsight, AIPrediction, ProposalDraft
+from .models import AIInsight, AIPrediction, AIReport, ProposalDraft
 
 
 class AIPredictionSerializer(serializers.ModelSerializer):
@@ -216,3 +216,50 @@ class ProposalSendSerializer(serializers.Serializer):
     subject = serializers.CharField(max_length=255)
     message = serializers.CharField(required=False, allow_blank=True, default='')
     attach_pdf = serializers.BooleanField(required=False, default=True)
+
+
+class AIReportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AIReport
+        fields = (
+            'id',
+            'report_type',
+            'title',
+            'executive_summary',
+            'health_score',
+            'confidence',
+            'key_metrics',
+            'findings',
+            'next_actions',
+            'methodology',
+            'snapshot',
+            'filters',
+            'period_start',
+            'period_end',
+            'provider',
+            'model_name',
+            'created_at',
+        )
+        read_only_fields = fields
+
+
+class AIReportGenerateSerializer(serializers.Serializer):
+    report_type = serializers.ChoiceField(choices=AIReport.ReportType.choices, default=AIReport.ReportType.OVERVIEW)
+    range = serializers.ChoiceField(
+        choices=('today', 'last_7_days', 'last_30_days', 'last_quarter', 'custom'),
+        default='last_30_days',
+    )
+    start_date = serializers.DateField(required=False)
+    end_date = serializers.DateField(required=False)
+    client = serializers.IntegerField(required=False, min_value=1)
+    project = serializers.IntegerField(required=False, min_value=1)
+    team_member = serializers.IntegerField(required=False, min_value=1)
+
+    def validate(self, attrs):
+        if attrs.get('range') == 'custom' and not attrs.get('start_date'):
+            raise serializers.ValidationError({'start_date': 'Choose a start date for a custom range.'})
+        if attrs.get('range') == 'custom' and not attrs.get('end_date'):
+            raise serializers.ValidationError({'end_date': 'Choose an end date for a custom range.'})
+        if attrs.get('start_date') and attrs.get('end_date') and attrs['start_date'] > attrs['end_date']:
+            raise serializers.ValidationError({'end_date': 'End date must be on or after the start date.'})
+        return attrs

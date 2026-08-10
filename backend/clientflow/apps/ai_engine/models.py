@@ -168,3 +168,44 @@ class ProposalDraft(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class AIReport(models.Model):
+    class ReportType(models.TextChoices):
+        OVERVIEW = 'overview', 'Executive overview'
+        REVENUE = 'revenue', 'Revenue and cash flow'
+        SALES = 'sales', 'Sales pipeline'
+        CLIENTS = 'clients', 'Client health'
+        DELIVERY = 'delivery', 'Project delivery'
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name='ai_reports',
+        on_delete=models.CASCADE,
+    )
+    report_type = models.CharField(max_length=30, choices=ReportType.choices)
+    title = models.CharField(max_length=255)
+    executive_summary = models.TextField()
+    health_score = models.PositiveSmallIntegerField()
+    confidence = models.CharField(max_length=20)
+    key_metrics = models.JSONField(default=list)
+    findings = models.JSONField(default=list)
+    next_actions = models.JSONField(default=list)
+    methodology = models.TextField(blank=True, default='')
+    snapshot = models.JSONField(default=dict)
+    filters = models.JSONField(default=dict)
+    period_start = models.DateField()
+    period_end = models.DateField()
+    provider = models.CharField(max_length=30, default='openai')
+    model_name = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'report_type', 'created_at']),
+            models.Index(fields=['user', 'created_at']),
+        ]
+
+    def __str__(self):
+        return self.title

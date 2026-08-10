@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Paper, Stack, Typography } from '@mui/material';
+import { Paper, Stack, Typography } from '@mui/material';
 
 interface KpiCardProps {
   label: string;
@@ -9,12 +9,12 @@ interface KpiCardProps {
 }
 
 const KpiCard = ({ label, value, hint, accent = 'primary.main' }: KpiCardProps) => (
-  <Paper sx={{ p: 2.5, height: '100%' }}>
+  <Paper variant="outlined" sx={{ p: 2.25, height: '100%' }}>
     <Stack spacing={1}>
-      <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: '0.08em' }}>
+      <Typography variant="body2" color="text.secondary" fontWeight={650}>
         {label}
       </Typography>
-      <Typography variant="h4" fontWeight={800} sx={{ color: accent }}>
+      <Typography variant="h4" sx={{ color: accent, fontVariantNumeric: 'tabular-nums' }}>
         {value}
       </Typography>
       {hint ? (
@@ -22,7 +22,6 @@ const KpiCard = ({ label, value, hint, accent = 'primary.main' }: KpiCardProps) 
           {hint}
         </Typography>
       ) : null}
-      <Box sx={{ mt: 'auto', height: 4, borderRadius: 2, bgcolor: accent, opacity: 0.35, width: 48 }} />
     </Stack>
   </Paper>
 );

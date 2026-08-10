@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db.models import F
 from django.http import HttpResponse
 from django.utils import timezone
@@ -14,10 +15,12 @@ from clientflow.apps.clients.models import Client
 from clientflow.apps.invoices.models import Invoice
 from clientflow.apps.leads.models import Lead
 
-from .models import AIInsight, AIPrediction, ProposalDraft
+from .models import AIInsight, AIPrediction, AIReport, ProposalDraft
 from .serializers import (
     AIInsightSerializer,
     AIPredictionSerializer,
+    AIReportGenerateSerializer,
+    AIReportSerializer,
     InsightGenerateSerializer,
     ProposalDraftSerializer,
     ProposalGenerateSerializer,
@@ -26,11 +29,14 @@ from .serializers import (
 from .services.churn_prediction_service import score_client_churn_risk
 from .services.insight_service import generate_insights_for_user, list_insights_for_user, mark_all_read
 from .services.lead_scoring_service import score_lead
+from .services.openai_service import OpenAIUnavailable
 from .services.payment_risk_service import score_invoice_payment_risk
 from .services.proposal_email_service import send_proposal_email
 from .services.proposal_generation_service import generate_proposal
 from .services.proposal_pdf_service import generate_proposal_pdf
 from .services.revenue_forecast_service import forecast_revenue
+from .services.report_generation_service import generate_ai_report
+from .services.report_pdf_service import generate_report_pdf
 
 
 class AIPredictionViewSet(ModelViewSet):
@@ -237,3 +243,50 @@ class RevenueForecastView(APIView):
 
     def get(self, request):
         return Response(forecast_revenue(user=request.user))
+
+
+class AIReportViewSet(ModelViewSet):
+    serializer_class = AIReportSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ['get', 'post', 'delete', 'head', 'options']
+    filterset_fields = ['report_type']
+    ordering = ['-created_at']
+
+    def get_queryset(self):
+        return AIReport.objects.filter(user=self.request.user)
+
+    def get_serializer_class(self):
+        if self.action == 'generate':
+            return AIReportGenerateSerializer
+        return AIReportSerializer
+
+    @action(detail=False, methods=['get'], url_path='configuration')
+    def configuration(self, request):
+        configured = bool(getattr(settings, 'OPENAI_API_KEY', '')) and getattr(
+            settings, 'AI_REPORT_PROVIDER', 'openai'
+        ) == 'openai'
+        return Response({
+            'configured': configured,
+            'provider': 'openai',
+            'model': getattr(settings, 'OPENAI_MODEL', 'gpt-4o-mini') if configured else None,
+        })
+
+    @action(detail=False, methods=['post'], url_path='generate')
+    def generate(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            report = generate_ai_report(request.user, serializer.validated_data)
+        except OpenAIUnavailable as exc:
+            return Response(
+                {'detail': str(exc), 'code': 'ai_not_configured'},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        return Response(AIReportSerializer(report).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['get'], url_path='download')
+    def download(self, request, pk=None):
+        report = self.get_object()
+        response = HttpResponse(generate_report_pdf(report), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="clientflow-ai-report-{report.pk}.pdf"'
+        return response

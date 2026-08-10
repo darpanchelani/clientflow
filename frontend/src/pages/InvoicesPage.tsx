@@ -70,8 +70,8 @@ const InvoicesPage = () => {
   const invoices = query.data?.results ?? [];
   const nextCursor = extractCursor(query.data?.next);
   const prevCursor = extractCursor(query.data?.previous);
-  const clients = clientsQuery.data?.results ?? [];
-  const projects = projectsQuery.data?.results ?? [];
+  const clients = useMemo(() => clientsQuery.data?.results ?? [], [clientsQuery.data]);
+  const projects = useMemo(() => projectsQuery.data?.results ?? [], [projectsQuery.data]);
   const paymentRiskByInvoiceId = useMemo(() => {
     return (paymentRisksQuery.data ?? []).reduce<Record<number, AIPrediction>>((acc, prediction) => {
       acc[prediction.entity_id] = prediction;
@@ -112,12 +112,12 @@ const InvoicesPage = () => {
     {
       id: 'client',
       label: 'Client',
-      render: (invoice) => invoice.client?.name ?? '—',
+      render: (invoice) => invoice.client?.name ?? 'Not assigned',
     },
     {
       id: 'project',
       label: 'Project',
-      render: (invoice) => invoice.project?.name ?? '—',
+      render: (invoice) => invoice.project?.name ?? 'Not assigned',
     },
     {
       id: 'status',

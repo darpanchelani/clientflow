@@ -34,7 +34,7 @@ const PaymentsPage = () => {
   const [filters, setFilters] = useUrlFilters({ search: '', status: '', invoice: '' });
 
   const query = usePaymentsQuery(filters);
-  const payments = query.data?.results ?? [];
+  const payments = useMemo(() => query.data?.results ?? [], [query.data]);
 
   const columns: AppTableColumn<Payment>[] = [
     {
@@ -88,14 +88,14 @@ const PaymentsPage = () => {
     {
       id: 'transaction',
       label: 'Transaction',
-      render: (payment) => payment.transaction_id || '—',
+      render: (payment) => payment.transaction_id || 'Not provided',
     },
     {
       id: 'paid',
       label: 'Paid at',
       sortable: true,
       getSortValue: (row) => (row.paid_at ? new Date(row.paid_at).getTime() : 0),
-      render: (payment) => (payment.paid_at ? new Date(payment.paid_at).toLocaleString() : '—'),
+      render: (payment) => (payment.paid_at ? new Date(payment.paid_at).toLocaleString() : 'Not paid'),
     },
   ];
 

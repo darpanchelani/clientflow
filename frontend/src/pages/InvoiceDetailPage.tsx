@@ -57,8 +57,8 @@ const InvoiceDetailPage = () => {
   const verifyPaymentMutation = useVerifyPaymentMutation();
 
   const invoice = invoiceQuery.data;
-  const clients = clientsQuery.data?.results ?? [];
-  const projects = projectsQuery.data?.results ?? [];
+  const clients = useMemo(() => clientsQuery.data?.results ?? [], [clientsQuery.data]);
+  const projects = useMemo(() => projectsQuery.data?.results ?? [], [projectsQuery.data]);
 
   const dialogClients = useMemo(() => {
     if (!invoice?.client) return clients;
@@ -148,13 +148,13 @@ const InvoiceDetailPage = () => {
                 <Grid item xs={12} sm={6} md={3}>
                   <Stack spacing={0.5}>
                     <span style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase' }}>Client</span>
-                    <strong>{invoice.client?.name || '—'}</strong>
+                    <strong>{invoice.client?.name || 'Not assigned'}</strong>
                   </Stack>
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
                   <Stack spacing={0.5}>
                     <span style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase' }}>Project</span>
-                    <strong>{invoice.project?.name || '—'}</strong>
+                    <strong>{invoice.project?.name || 'Not assigned'}</strong>
                   </Stack>
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>

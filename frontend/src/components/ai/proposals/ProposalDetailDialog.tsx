@@ -88,10 +88,10 @@ const ProposalDetailDialog = ({
             <Typography color="text.secondary">{relationLine(proposal)}</Typography>
             <Stack spacing={0.5}>
               <Typography color="text.secondary">Sent to: {proposal.sent_to_email || 'Not sent'}</Typography>
-              <Typography color="text.secondary">Sent date: {proposal.sent_at ? new Date(proposal.sent_at).toLocaleString() : '—'}</Typography>
+              <Typography color="text.secondary">Sent date: {proposal.sent_at ? new Date(proposal.sent_at).toLocaleString() : 'Not sent'}</Typography>
               <Typography color="text.secondary">Downloads: {proposal.download_count ?? 0}</Typography>
               <Typography color="text.secondary">
-                Last downloaded: {proposal.last_downloaded_at ? new Date(proposal.last_downloaded_at).toLocaleString() : '—'}
+                Last downloaded: {proposal.last_downloaded_at ? new Date(proposal.last_downloaded_at).toLocaleString() : 'Never'}
               </Typography>
             </Stack>
             <Divider />

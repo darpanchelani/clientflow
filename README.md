@@ -173,6 +173,7 @@ http://localhost:8000  # Backend
 - Financial analytics (revenue, profitability)
 - Operational analytics (project efficiency)
 - Custom dashboards and reports
+- OpenAI-powered executive reports with evidence-backed findings and saved history
 - Scheduled email reports
 
 ---
@@ -208,13 +209,18 @@ Output: Churn risk score + retention recommendations
 Business Impact: +25% client retention
 ```
 
-**4. Proposal Generation**
+**4. Proposal and Report Generation**
 ```
-Type: OpenAI GPT-4 (LLM)
-Model: text-davinci-004
-Latency: <5 seconds per proposal
-Business Impact: Reduces proposal creation from 2 hours to 5 minutes
+Type: OpenAI Responses API with Structured Outputs
+Model: Configurable with OPENAI_MODEL (gpt-4o-mini by default)
+Outputs: Proposals plus structured business reports with metrics, findings, and actions
+Privacy: API response storage is disabled for generation requests
 ```
+
+To enable AI reports locally, set `OPENAI_API_KEY`, keep
+`AI_REPORT_PROVIDER=openai`, run migrations, and restart the backend. When the
+key is absent, the Reports page clearly shows that AI is unavailable while raw
+CSV, Excel, and PDF exports continue to work.
 
 ---
 

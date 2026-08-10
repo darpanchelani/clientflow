@@ -101,6 +101,7 @@ class InvoiceAPITests(APITestCase):
             project=self.project,
             owner=self.user,
             organization_name='ClientFlow',
+            status=Invoice.Status.SENT,
             due_date='2020-01-01',
             issue_date='2020-01-01',
             tax='0.00',
@@ -110,4 +111,3 @@ class InvoiceAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         invoice.refresh_from_db()
         self.assertEqual(invoice.status, 'overdue')
-

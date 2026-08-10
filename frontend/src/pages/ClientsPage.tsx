@@ -115,14 +115,14 @@ const ClientsPage = () => {
     {
       id: 'lead',
       label: 'Lead',
-      render: (client) => client.lead?.name ?? '—',
+      render: (client) => client.lead?.name ?? 'Not linked',
     },
     {
       id: 'company',
       label: 'Company',
       sortable: true,
       getSortValue: (row) => row.company || '',
-      render: (client) => client.company || '—',
+      render: (client) => client.company || 'Not provided',
     },
     {
       id: 'status',
@@ -163,7 +163,7 @@ const ClientsPage = () => {
             ))}
           </Stack>
         ) : (
-          '—'
+          'No activity'
         ),
     },
     {

@@ -69,7 +69,7 @@ const ProjectDialog = ({
       name: values.name,
       description: values.description || '',
       client_id: Number(values.client_id),
-      status: values.status,
+      status: values.status as ProjectFormValues['status'],
       start_date: values.start_date || null,
       end_date: values.end_date || null,
     });

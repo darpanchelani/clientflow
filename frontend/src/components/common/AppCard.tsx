@@ -10,7 +10,7 @@ interface AppCardProps extends CardProps {
 
 const AppCard = ({ title, subtitle, action, children, ...props }: AppCardProps) => (
   <Card {...props}>
-    <CardContent>
+    <CardContent sx={{ p: { xs: 2, md: 2.5 }, '&:last-child': { pb: { xs: 2, md: 2.5 } } }}>
       {(title || action) && (
         <Stack
           direction={{ xs: 'column', sm: 'row' }}

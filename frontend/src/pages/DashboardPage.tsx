@@ -19,7 +19,6 @@ import AppPageHeader from '../components/common/AppPageHeader';
 import QueryState from '../components/common/QueryState';
 import KpiCard from '../components/dashboard/KpiCard';
 import LeadFunnelChart from '../components/dashboard/LeadFunnelChart';
-import DashboardSkeleton from '../components/skeletons/DashboardSkeleton';
 import { useAutomationDashboardSummaryQuery } from '../hooks/useAutomation';
 import { useAIInsights, useClientHealth, usePaymentRisks, useRevenueForecast } from '../hooks/useAI';
 import { useDashboardQuery } from '../hooks/useDashboard';

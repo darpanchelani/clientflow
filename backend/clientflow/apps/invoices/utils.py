@@ -10,9 +10,11 @@ from .models import Invoice
 def mark_overdue_invoices(*, queryset=None):
     today = timezone.localdate()
     qs = queryset or Invoice.objects.all()
+    # A draft has not been issued to a client, so it cannot be overdue yet.
     overdue_invoices = qs.filter(
         due_date__lt=today,
-    ).exclude(status__in=[Invoice.Status.PAID, Invoice.Status.CANCELLED, Invoice.Status.OVERDUE])
+        status=Invoice.Status.SENT,
+    )
     invoices = list(overdue_invoices.select_related('owner'))
     overdue_invoices.update(status=Invoice.Status.OVERDUE)
     for invoice in invoices:

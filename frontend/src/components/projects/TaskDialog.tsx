@@ -71,8 +71,8 @@ const TaskDialog = ({
         values.assigned_to_id === null || values.assigned_to_id === undefined
           ? null
           : Number(values.assigned_to_id),
-      status: values.status,
-      priority: values.priority,
+      status: values.status as TaskFormValues['status'],
+      priority: values.priority as TaskFormValues['priority'],
       due_date: values.due_date || null,
     });
   };

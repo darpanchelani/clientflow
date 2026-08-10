@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
 
 import { queryKeys } from '../constants/queryKeys';
 import { useMutationWithFeedback } from './useMutationWithFeedback';

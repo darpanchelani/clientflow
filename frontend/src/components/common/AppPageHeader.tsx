@@ -15,11 +15,11 @@ const AppPageHeader = ({ title, description, actions }: AppPageHeaderProps) => (
     spacing={2}
   >
     <Box>
-      <Typography variant="h4" component="h1" fontWeight={700} gutterBottom>
+      <Typography variant="h3" component="h1" sx={{ mb: 0.5 }}>
         {title}
       </Typography>
       {description ? (
-        <Typography color="text.secondary" maxWidth={720}>
+        <Typography color="text.secondary" maxWidth={720} sx={{ textWrap: 'pretty' }}>
           {description}
         </Typography>
       ) : null}

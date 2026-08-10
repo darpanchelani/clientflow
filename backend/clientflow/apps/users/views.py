@@ -10,6 +10,8 @@ from .serializers import UserProfileSerializer
 class UserListView(generics.ListAPIView):
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated]
+    ordering = ('first_name', 'email')
+    ordering_fields = ('first_name', 'last_name', 'email')
 
     def get_queryset(self):
         scope = get_scope_key(self.request.user)
@@ -18,5 +20,4 @@ class UserListView(generics.ListAPIView):
             queryset = queryset.filter(organization_name=scope)
         else:
             queryset = queryset.filter(pk=self.request.user.pk)
-        return queryset.order_by('first_name', 'email')
-
+        return queryset

@@ -73,3 +73,61 @@ export interface AnalyticsDashboard {
     failed: number;
   };
 }
+
+export type AIReportType = 'overview' | 'revenue' | 'sales' | 'clients' | 'delivery';
+
+export interface AIReportMetric {
+  label: string;
+  value: string;
+  context: string;
+  direction: 'up' | 'down' | 'flat' | 'neutral';
+}
+
+export interface AIReportFinding {
+  title: string;
+  detail: string;
+  evidence: string;
+  category: 'revenue' | 'sales' | 'clients' | 'delivery' | 'cash_flow';
+  severity: 'positive' | 'info' | 'warning' | 'critical';
+}
+
+export interface AIReportAction {
+  action: string;
+  rationale: string;
+  priority: 'now' | 'this_week' | 'this_month';
+  owner: string;
+}
+
+export interface AIReport {
+  id: number;
+  report_type: AIReportType;
+  title: string;
+  executive_summary: string;
+  health_score: number;
+  confidence: 'low' | 'medium' | 'high';
+  key_metrics: AIReportMetric[];
+  findings: AIReportFinding[];
+  next_actions: AIReportAction[];
+  methodology: string;
+  snapshot: AnalyticsDashboard;
+  filters: AnalyticsFilters;
+  period_start: string;
+  period_end: string;
+  provider: 'openai';
+  model_name: string;
+  created_at: string;
+}
+
+export interface AIReportConfiguration {
+  configured: boolean;
+  provider: 'openai';
+  model: string | null;
+}
+
+export interface PaginatedAIReports {
+  next: string | null;
+  previous: string | null;
+  results: AIReport[];
+}
+
+export type GenerateAIReportPayload = AnalyticsFilters & { report_type: AIReportType };

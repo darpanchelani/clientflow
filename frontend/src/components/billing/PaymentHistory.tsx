@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Chip, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
+import { Button, Chip, Stack, Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
 
 import AppCard from '../common/AppCard';
 import EmptyState from '../common/EmptyState';
@@ -57,9 +57,9 @@ const PaymentHistory = ({ payments, loading, onVerify }: PaymentHistoryProps) =>
                       }
                     />
                   </TableCell>
-                  <TableCell>{payment.transaction_id || '—'}</TableCell>
+                  <TableCell>{payment.transaction_id || 'Not provided'}</TableCell>
                   <TableCell>
-                    {payment.paid_at ? new Date(payment.paid_at).toLocaleString() : '—'}
+                    {payment.paid_at ? new Date(payment.paid_at).toLocaleString() : 'Not paid'}
                   </TableCell>
                   <TableCell align="right">
                     {payment.status === 'pending' && onVerify ? (

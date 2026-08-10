@@ -11,15 +11,16 @@ interface AnalyticsFilterBarProps {
   clients?: Client[];
   projects?: Project[];
   users?: UserSummary[];
+  orientation?: 'responsive' | 'vertical';
 }
 
-const AnalyticsFilterBar = ({ filters, onChange, clients = [], projects = [], users = [] }: AnalyticsFilterBarProps) => {
+const AnalyticsFilterBar = ({ filters, onChange, clients = [], projects = [], users = [], orientation = 'responsive' }: AnalyticsFilterBarProps) => {
   const update = (key: keyof AnalyticsFilters, value: string) => {
     onChange({ ...filters, [key]: value || undefined });
   };
 
   return (
-    <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
+    <Stack direction={orientation === 'vertical' ? 'column' : { xs: 'column', md: 'row' }} spacing={1.5}>
       <TextField select label="Date range" value={filters.range ?? 'last_30_days'} onChange={(event) => update('range', event.target.value)} sx={{ minWidth: 170 }}>
         <MenuItem value="today">Today</MenuItem>
         <MenuItem value="last_7_days">Last 7 days</MenuItem>
