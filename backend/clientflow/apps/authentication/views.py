@@ -10,6 +10,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from clientflow.apps.users.serializers import UserProfileSerializer
 
 from .serializers import (
+    ChangePasswordSerializer,
     LoginSerializer,
     LogoutSerializer,
     RegisterSerializer,
@@ -26,9 +27,9 @@ class RegisterView(APIView):
         user = serializer.save()
         refresh = RefreshToken.for_user(user)
         payload = {
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-            'user': UserProfileSerializer(user).data,
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+            "user": UserProfileSerializer(user).data,
         }
         return Response(payload, status=status.HTTP_201_CREATED)
 
@@ -38,7 +39,7 @@ class LoginView(APIView):
 
     @extend_schema(request=LoginSerializer, responses={200: OpenApiTypes.OBJECT})
     def post(self, request):
-        serializer = LoginSerializer(data=request.data, context={'request': request})
+        serializer = LoginSerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         return Response(serializer.validated_data, status=status.HTTP_200_OK)
 
@@ -56,7 +57,9 @@ class LogoutView(APIView):
         serializer = LogoutSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response({'detail': 'Successfully logged out.'}, status=status.HTTP_200_OK)
+        return Response(
+            {"detail": "Successfully logged out."}, status=status.HTTP_200_OK
+        )
 
 
 class ProfileView(APIView):
@@ -66,3 +69,30 @@ class ProfileView(APIView):
     def get(self, request):
         serializer = UserProfileSerializer(request.user)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @extend_schema(request=UserProfileSerializer, responses=UserProfileSerializer)
+    def patch(self, request):
+        serializer = UserProfileSerializer(
+            request.user, data=request.data, partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class PasswordChangeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        request=ChangePasswordSerializer, responses={200: OpenApiTypes.OBJECT}
+    )
+    def post(self, request):
+        serializer = ChangePasswordSerializer(
+            data=request.data, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            {"detail": "Password changed. Sign in again with your new password."},
+            status=status.HTTP_200_OK,
+        )
