@@ -21,5 +21,5 @@ does not currently publish long-term-support release lines.
 Production operators must provide a strong `SECRET_KEY`, HTTPS, restricted
 hosts and CORS origins, managed secrets, encrypted backups, dependency scanning,
 centralized monitoring, and independent security testing. The application does
-not become compliant merely by enabling a settings flag; use the evidence gates
-in `15-LAUNCH-DEPLOYMENT-CHECKLIST.md`.
+not become compliant merely by enabling a settings flag. Deployment owners must
+record and review evidence for each of these controls before release.
