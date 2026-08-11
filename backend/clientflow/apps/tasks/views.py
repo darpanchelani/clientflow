@@ -21,6 +21,8 @@ class TaskViewSet(viewsets.ModelViewSet):
     ordering = ['status', '-updated_at']
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Task.objects.none()
         user = self.request.user
         scope = get_scope_key(user)
         queryset = Task.objects.select_related('project', 'project__client', 'assigned_to', 'project__owner').all()

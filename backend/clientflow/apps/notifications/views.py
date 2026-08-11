@@ -15,6 +15,8 @@ class NotificationViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, view
     ordering = ['-created_at']
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Notification.objects.none()
         return Notification.objects.select_related('target_content_type').filter(user=self.request.user)
 
     @action(detail=False, methods=['get'], url_path='unread-count')

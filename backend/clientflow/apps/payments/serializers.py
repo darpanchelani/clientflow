@@ -37,7 +37,7 @@ class PaymentSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ('id', 'invoice', 'paid_at', 'balance_after_payment', 'created_at', 'updated_at')
 
-    def get_balance_after_payment(self, obj):
+    def get_balance_after_payment(self, obj) -> Decimal:
         completed_total = obj.invoice.payments.filter(status=Payment.Status.COMPLETED).aggregate(total=Sum('amount')).get('total') or Decimal('0.00')
         if obj.status == Payment.Status.COMPLETED:
             completed_total = completed_total

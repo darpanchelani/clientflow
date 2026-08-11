@@ -69,7 +69,7 @@ class LeadFollowUpSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ('id', 'lead', 'assigned_user', 'is_overdue', 'completed_at', 'created_at', 'updated_at')
 
-    def get_is_overdue(self, obj):
+    def get_is_overdue(self, obj) -> bool:
         from django.utils import timezone
 
         return obj.status == LeadFollowUp.Status.PENDING and obj.due_date < timezone.localdate()
@@ -101,7 +101,7 @@ class GlobalActivitySerializer(serializers.ModelSerializer):
         )
         read_only_fields = fields
 
-    def get_target_type(self, obj):
+    def get_target_type(self, obj) -> str | None:
         if not obj.target_content_type_id:
             return None
         return obj.target_content_type.model

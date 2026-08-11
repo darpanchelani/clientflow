@@ -20,6 +20,7 @@ class UserSummarySerializer(serializers.ModelSerializer):
         model = User
         fields = ('id', 'email', 'first_name', 'last_name', 'role')
         read_only_fields = fields
+        ref_name = 'ProjectUserSummary'
 
 
 class ProjectSerializer(serializers.ModelSerializer):

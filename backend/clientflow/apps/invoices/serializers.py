@@ -98,10 +98,10 @@ class InvoiceSerializer(serializers.ModelSerializer):
             'updated_at',
         )
 
-    def get_balance_due(self, obj):
+    def get_balance_due(self, obj) -> Decimal:
         return obj.balance_due
 
-    def get_is_overdue(self, obj):
+    def get_is_overdue(self, obj) -> bool:
         return obj.status == Invoice.Status.OVERDUE
 
     def validate(self, attrs):
@@ -205,4 +205,3 @@ class PaymentSummarySerializer(serializers.Serializer):
     transaction_id = serializers.CharField(allow_null=True, required=False)
     status = serializers.CharField()
     paid_at = serializers.DateTimeField(allow_null=True, required=False)
-

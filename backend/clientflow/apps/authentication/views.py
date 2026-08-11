@@ -1,3 +1,4 @@
+from drf_spectacular.utils import OpenApiTypes, extend_schema
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -18,6 +19,7 @@ from .serializers import (
 class RegisterView(APIView):
     permission_classes = [AllowAny]
 
+    @extend_schema(request=RegisterSerializer, responses={201: OpenApiTypes.OBJECT})
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -34,6 +36,7 @@ class RegisterView(APIView):
 class LoginView(APIView):
     permission_classes = [AllowAny]
 
+    @extend_schema(request=LoginSerializer, responses={200: OpenApiTypes.OBJECT})
     def post(self, request):
         serializer = LoginSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
@@ -48,6 +51,7 @@ class RefreshView(TokenRefreshView):
 class LogoutView(APIView):
     permission_classes = [AllowAny]
 
+    @extend_schema(request=LogoutSerializer, responses={200: OpenApiTypes.OBJECT})
     def post(self, request):
         serializer = LogoutSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -58,6 +62,7 @@ class LogoutView(APIView):
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(responses=UserProfileSerializer)
     def get(self, request):
         serializer = UserProfileSerializer(request.user)
         return Response(serializer.data, status=status.HTTP_200_OK)

@@ -29,6 +29,8 @@ class InvoiceViewSet(viewsets.ModelViewSet):
     ordering = ['-created_at']
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Invoice.objects.none()
         user = self.request.user
         scope = get_scope_key(user)
         queryset = Invoice.objects.select_related('client', 'project', 'owner', 'client__lead').prefetch_related('items', 'payments')

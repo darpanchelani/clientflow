@@ -22,6 +22,8 @@ class PaymentViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.Retr
     ordering = ['-created_at']
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Payment.objects.none()
         user = self.request.user
         scope = get_scope_key(user)
         queryset = Payment.objects.select_related('invoice', 'invoice__client', 'created_by').all()

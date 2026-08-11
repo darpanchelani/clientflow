@@ -3,6 +3,7 @@ Custom middleware for audit logging and request tracking
 """
 import json
 import logging
+import time
 import uuid
 from django.utils.deprecation import MiddlewareMixin
 
@@ -16,7 +17,8 @@ class AuditMiddleware(MiddlewareMixin):
     
     def process_request(self, request):
         """Add request ID and timestamp"""
-        request.id = str(uuid.uuid4())
+        request.id = request.headers.get('X-Request-ID') or str(uuid.uuid4())
+        request._audit_started_at = time.monotonic()
         request.META['HTTP_X_REQUEST_ID'] = request.id
         return None
     
@@ -29,12 +31,15 @@ class AuditMiddleware(MiddlewareMixin):
                 'path': request.path,
                 'status_code': response.status_code,
                 'user': getattr(request.user, 'id', 'anonymous'),
+                'duration_ms': round(
+                    (time.monotonic() - getattr(request, '_audit_started_at', time.monotonic())) * 1000,
+                    2,
+                ),
             }
             
-            if hasattr(request, 'user') and request.user.is_authenticated:
-                log_data['user_email'] = request.user.email
-            
             logger.info(json.dumps(log_data))
+
+        response['X-Request-ID'] = getattr(request, 'id', 'N/A')
         
         return response
 

@@ -21,7 +21,7 @@ class NotificationSerializer(serializers.ModelSerializer):
         )
         read_only_fields = fields
 
-    def get_target_type(self, obj):
+    def get_target_type(self, obj) -> str | None:
         if not obj.target_content_type_id:
             return None
         return obj.target_content_type.model

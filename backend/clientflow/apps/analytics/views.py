@@ -1,3 +1,4 @@
+from drf_spectacular.utils import OpenApiTypes, extend_schema
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -8,6 +9,7 @@ from .utils import build_analytics_payload, csv_response, pdf_response, report_r
 class AnalyticsDashboardView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(responses=OpenApiTypes.OBJECT)
     def get(self, request):
         return Response(build_analytics_payload(request.user, request.query_params))
 
@@ -15,6 +17,7 @@ class AnalyticsDashboardView(APIView):
 class RevenueAnalyticsView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(responses=OpenApiTypes.OBJECT)
     def get(self, request):
         return Response(build_analytics_payload(request.user, request.query_params)['revenue'])
 
@@ -22,6 +25,7 @@ class RevenueAnalyticsView(APIView):
 class SalesFunnelAnalyticsView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(responses=OpenApiTypes.OBJECT)
     def get(self, request):
         return Response(build_analytics_payload(request.user, request.query_params)['sales_funnel'])
 
@@ -29,6 +33,7 @@ class SalesFunnelAnalyticsView(APIView):
 class ProjectAnalyticsView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(responses=OpenApiTypes.OBJECT)
     def get(self, request):
         return Response(build_analytics_payload(request.user, request.query_params)['projects'])
 
@@ -36,6 +41,7 @@ class ProjectAnalyticsView(APIView):
 class TaskAnalyticsView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(responses=OpenApiTypes.OBJECT)
     def get(self, request):
         return Response(build_analytics_payload(request.user, request.query_params)['tasks'])
 
@@ -43,6 +49,7 @@ class TaskAnalyticsView(APIView):
 class ClientAnalyticsView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(responses=OpenApiTypes.OBJECT)
     def get(self, request):
         return Response(build_analytics_payload(request.user, request.query_params)['clients'])
 
@@ -50,6 +57,7 @@ class ClientAnalyticsView(APIView):
 class ReportExportView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(responses={(200, 'application/octet-stream'): OpenApiTypes.BINARY})
     def get(self, request):
         report_type = request.query_params.get('type', 'revenue')
         file_format = request.query_params.get('format', 'csv')

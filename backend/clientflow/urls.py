@@ -5,10 +5,21 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
+from django.views.decorators.csrf import csrf_exempt
+from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
+from graphene_django.views import GraphQLView
+
+from clientflow.health import health_live, health_ready
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('health/live', health_live, name='health-live'),
+    path('health/ready', health_ready, name='health-ready'),
+    path('api/schema/', SpectacularAPIView.as_view(), name='api-schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='api-schema'), name='api-docs'),
+    path('api/redoc/', SpectacularRedocView.as_view(url_name='api-schema'), name='api-redoc'),
+    path('graphql/', csrf_exempt(GraphQLView.as_view(graphiql=settings.DEBUG)), name='graphql'),
     path('api/auth/', include('clientflow.apps.authentication.urls', namespace='auth')),
     path('api/leads/', include('clientflow.apps.leads.urls', namespace='leads')),
     path('api/clients/', include('clientflow.apps.clients.urls', namespace='clients')),

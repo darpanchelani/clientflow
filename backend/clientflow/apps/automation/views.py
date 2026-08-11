@@ -1,4 +1,5 @@
 from django.db.models import Q
+from drf_spectacular.utils import extend_schema
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -27,6 +28,8 @@ class WorkflowRuleViewSet(viewsets.ModelViewSet):
     ordering = ['trigger_type', 'name']
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return WorkflowRule.objects.none()
         ensure_default_workflow_rules(self.request.user)
         return WorkflowRule.objects.filter(organization_name=get_scope_key(self.request.user))
 
@@ -37,10 +40,12 @@ class WorkflowRuleViewSet(viewsets.ModelViewSet):
 class AutomationPreferenceView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(responses=AutomationPreferenceSerializer)
     def get(self, request):
         preferences, _ = AutomationPreference.objects.get_or_create(user=request.user)
         return Response(AutomationPreferenceSerializer(preferences).data, status=status.HTTP_200_OK)
 
+    @extend_schema(request=AutomationPreferenceSerializer, responses=AutomationPreferenceSerializer)
     def put(self, request):
         preferences, _ = AutomationPreference.objects.get_or_create(user=request.user)
         serializer = AutomationPreferenceSerializer(preferences, data=request.data)
@@ -48,6 +53,7 @@ class AutomationPreferenceView(APIView):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @extend_schema(request=AutomationPreferenceSerializer, responses=AutomationPreferenceSerializer)
     def patch(self, request):
         preferences, _ = AutomationPreference.objects.get_or_create(user=request.user)
         serializer = AutomationPreferenceSerializer(preferences, data=request.data, partial=True)
@@ -69,6 +75,8 @@ class LeadFollowUpViewSet(viewsets.ModelViewSet):
         return LeadFollowUpSerializer
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return LeadFollowUp.objects.none()
         scope = get_scope_key(self.request.user)
         return LeadFollowUp.objects.select_related('lead', 'assigned_user', 'created_by', 'lead__owner').filter(
             Q(assigned_user=self.request.user) | Q(lead__organization_name=scope)
@@ -110,6 +118,8 @@ class GlobalActivityViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     ordering = ['-created_at']
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return GlobalActivity.objects.none()
         return GlobalActivity.objects.select_related('actor', 'target_content_type').filter(
             organization_name=get_scope_key(self.request.user)
         )
@@ -118,6 +128,7 @@ class GlobalActivityViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
 class AutomationDashboardSummaryView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(responses=AutomationDashboardSummarySerializer)
     def get(self, request):
         data = build_dashboard_summary(request.user)
         serializer = AutomationDashboardSummarySerializer(data)

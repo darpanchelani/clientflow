@@ -6,13 +6,26 @@
 ![Python](https://img.shields.io/badge/python-3.12+-blue.svg)
 ![React](https://img.shields.io/badge/react-18.2+-blue.svg)
 ![PostgreSQL](https://img.shields.io/badge/postgresql-14+-blue.svg)
-![Status](https://img.shields.io/badge/status-production--ready-brightgreen.svg)
+![Status](https://img.shields.io/badge/status-launch--candidate-blue.svg)
 
 ---
 
 ## Overview
 
 ClientFlow is a unified, AI-powered SaaS platform that consolidates the entire client lifecycle management for freelancers, consultants, and small agencies into a single, intelligent dashboard.
+
+### Current implementation status
+
+The web application is a tested launch candidate: its core CRM, project, billing,
+automation, analytics, AI proposal, and AI reporting flows are implemented. The
+repository also includes authenticated REST and GraphQL APIs, OpenAPI docs,
+health checks, background workers, production container definitions, and CI.
+
+“Launch candidate” does not mean that external operations are complete. AWS
+resources, DNS/TLS, paid vendor accounts, legal approvals, app-store review,
+penetration testing, beta-user acceptance, and production KPI validation require
+an authorized deployment team and remain explicit gates in
+[15-LAUNCH-DEPLOYMENT-CHECKLIST.md](15-LAUNCH-DEPLOYMENT-CHECKLIST.md).
 
 ### Problem Solved
 - Freelancers waste **40% of time** switching between 5+ disconnected tools
@@ -30,9 +43,12 @@ ClientFlow provides:
 
 ---
 
-## Key Metrics
+## Design and Business Targets
 
-| Metric | Value | Impact |
+The figures below are portfolio scenario targets, not audited production results.
+They must be replaced with observed telemetry before a real launch claim.
+
+| Metric | Target | Intended impact |
 |--------|-------|--------|
 | **Users** | 15,000+ | Managing 150M+ leads |
 | **MRR** | $1.2M | $14.4M annualized revenue |
@@ -74,11 +90,11 @@ ClientFlow provides:
 
 ### Technology Stack
 - **Frontend**: React 18, Redux Toolkit, Material UI, Chart.js
-- **Backend**: Python 3.12, Django 4.2, DRF 3.14, GraphQL (Graphene)
+- **Backend**: Python 3.12, Django 5.2 LTS, DRF 3.18, GraphQL (Graphene)
 - **Database**: PostgreSQL 14+ with read replicas
 - **Cache**: Redis (6GB cluster)
 - **Queue**: Celery 5.3 with Redis broker
-- **ML/AI**: XGBoost 2.0, LightGBM 4.1, scikit-learn 1.3, numpy 1.26, OpenAI GPT-4
+- **ML/AI**: XGBoost 2.0, LightGBM 4.7, scikit-learn 1.9, numpy 1.26, OpenAI Responses API
 - **Cloud**: AWS (EC2, RDS, S3, CloudFront)
 - **DevOps**: Docker, GitHub Actions, Terraform
 
@@ -118,6 +134,10 @@ npm start
 Access frontend: http://localhost:3000
 Access backend: http://localhost:8000
 Access API docs: http://localhost:8000/api/docs/
+Access ReDoc: http://localhost:8000/api/redoc/
+Access GraphQL: http://localhost:8000/graphql/
+Liveness check: http://localhost:8000/health/live
+Readiness check: http://localhost:8000/health/ready
 
 **Option 2: Docker Compose**
 
@@ -226,9 +246,12 @@ CSV, Excel, and PDF exports continue to work.
 
 ## Performance
 
+These are engineering targets and reference benchmarks from the design brief.
+Production acceptance requires measured load-test and monitoring evidence.
+
 ### API Performance
 ```
-Metric                  Target      Achieved
+Metric                  Target      Reference
 ─────────────────────────────────────────────
 Response Time (p95)    <300ms       <200ms
 Throughput             1K req/sec   1.5K req/sec
@@ -238,7 +261,7 @@ Error Rate             <0.1%        0.05%
 
 ### Frontend Performance
 ```
-Metric                  Target      Achieved
+Metric                  Target      Reference
 ─────────────────────────────────────────────
 First Contentful Paint <3s          <2s
 Interactive            <5s          <3s
@@ -248,7 +271,7 @@ Lighthouse Score       >90          95
 
 ### Database Performance
 ```
-Metric                  Target      Achieved
+Metric                  Target      Reference
 ─────────────────────────────────────────────
 Query Latency          <100ms       <50ms
 Throughput             5K qps       8K qps
@@ -271,8 +294,8 @@ Replication Lag        <100ms       <50ms
 - AES-256 encryption at rest
 - TLS 1.2+ in transit
 - Encrypted fields for sensitive data (SSN, credit cards)
-- GDPR/CCPA compliant
-- SOC 2 Type II certified
+- Controls designed to support GDPR/CCPA obligations
+- SOC 2 readiness architecture; independent certification is pending
 
 ### Audit & Compliance
 - Complete audit logging (user actions)
@@ -361,24 +384,23 @@ Net Margin:        35%
 
 ```
 Backend:
-├── Lines of Code:    ~20,000
-├── Models:           35
-├── API Endpoints:    80+
-├── Test Coverage:    82%
-└── Files:            150+
+├── Python lines:     ~7,500
+├── Domain models:    20
+├── OpenAPI paths:    100+
+├── Tests:            94 passing
+└── Test coverage:    87%
 
 Frontend:
-├── Lines of Code:    ~15,000
-├── Components:       40+
-├── Pages:            8
-├── Test Coverage:    75%
-└── Files:            100+
+├── TypeScript lines: ~13,000
+├── Components:       60+
+├── Pages:            19
+├── Unit tests:       5 passing
+└── Route chunks:     Lazy-loaded
 
 Total:
-├── Total Lines:      ~35,000+
-├── Files:            250+
+├── Application code: ~20,500 lines
 ├── Documentation:    3,000+ lines
-└── Test Cases:       200+
+└── CI gates:         Backend, frontend, schema, migrations, containers
 ```
 
 ---
@@ -427,6 +449,13 @@ This is a portfolio project, but contributions are welcome for:
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
 
+Before opening a pull request, run:
+
+```bash
+cd backend && python -m pytest --cov=clientflow
+cd ../frontend && npm run lint && npm test -- --watchAll=false && npm run build
+```
+
 ---
 
 ## Contact & Support
@@ -463,13 +492,13 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 - Payment tracking
 - Basic analytics
 
-### In Progress 
-- Mobile app (React Native)
-- Advanced reporting
-- Workflow automation (Zapier integration)
-- Team collaboration features
+### In Progress
+- External-provider adapters and deployment configuration
+- Frontend coverage expansion and end-to-end browser tests
+- Production security and performance validation
 
 ### Planned 
+- Mobile app (React Native)
 - AI chatbot for customer support
 - Business intelligence suite
 - API partner ecosystem

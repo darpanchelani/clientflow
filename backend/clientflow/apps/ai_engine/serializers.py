@@ -111,7 +111,7 @@ class ProposalDraftSerializer(serializers.ModelSerializer):
             'updated_at',
         )
 
-    def get_lead_summary(self, obj):
+    def get_lead_summary(self, obj) -> dict | None:
         if not obj.lead_id:
             return None
         return {
@@ -121,7 +121,7 @@ class ProposalDraftSerializer(serializers.ModelSerializer):
             'company': obj.lead.company,
         }
 
-    def get_client_summary(self, obj):
+    def get_client_summary(self, obj) -> dict | None:
         if not obj.client_id:
             return None
         return {
@@ -131,7 +131,7 @@ class ProposalDraftSerializer(serializers.ModelSerializer):
             'company': obj.client.company,
         }
 
-    def get_project_summary(self, obj):
+    def get_project_summary(self, obj) -> dict | None:
         if not obj.project_id:
             return None
         return {

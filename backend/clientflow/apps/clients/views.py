@@ -23,6 +23,8 @@ class ClientViewSet(viewsets.ModelViewSet):
     ordering = ['-created_at']
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Client.objects.none()
         user = self.request.user
         scope = get_scope_key(user)
         queryset = Client.objects.select_related('owner', 'lead').prefetch_related('tags')

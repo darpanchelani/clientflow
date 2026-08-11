@@ -1,32 +1,32 @@
-import React, { useEffect } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
+import { Box, CircularProgress } from '@mui/material';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAppDispatch } from './store';
 import { checkAuth } from './store/slices/authSlice';
 
-// Pages
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import DashboardPage from './pages/DashboardPage';
-import LeadsPage from './pages/LeadsPage';
-import ClientsPage from './pages/ClientsPage';
-import ProjectsPage from './pages/ProjectsPage';
-import ProjectDetailPage from './pages/ProjectDetailPage';
-import InvoicesPage from './pages/InvoicesPage';
-import InvoiceDetailPage from './pages/InvoiceDetailPage';
-import PaymentsPage from './pages/PaymentsPage';
-import FollowUpsPage from './pages/FollowUpsPage';
-import ActivityFeedPage from './pages/ActivityFeedPage';
-import AutomationSettingsPage from './pages/AutomationSettingsPage';
-import AnalyticsPage from './pages/AnalyticsPage';
-import ExecutiveDashboardPage from './pages/ExecutiveDashboardPage';
-import ReportsPage from './pages/ReportsPage';
-import AIInsightsPage from './pages/AIInsightsPage';
-import ProposalsPage from './pages/ProposalsPage';
-import NotFoundPage from './pages/NotFoundPage';
-
 // Components
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import Layout from './components/layout/Layout';
+
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const LeadsPage = lazy(() => import('./pages/LeadsPage'));
+const ClientsPage = lazy(() => import('./pages/ClientsPage'));
+const ProjectsPage = lazy(() => import('./pages/ProjectsPage'));
+const ProjectDetailPage = lazy(() => import('./pages/ProjectDetailPage'));
+const InvoicesPage = lazy(() => import('./pages/InvoicesPage'));
+const InvoiceDetailPage = lazy(() => import('./pages/InvoiceDetailPage'));
+const PaymentsPage = lazy(() => import('./pages/PaymentsPage'));
+const FollowUpsPage = lazy(() => import('./pages/FollowUpsPage'));
+const ActivityFeedPage = lazy(() => import('./pages/ActivityFeedPage'));
+const AutomationSettingsPage = lazy(() => import('./pages/AutomationSettingsPage'));
+const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'));
+const ExecutiveDashboardPage = lazy(() => import('./pages/ExecutiveDashboardPage'));
+const ReportsPage = lazy(() => import('./pages/ReportsPage'));
+const AIInsightsPage = lazy(() => import('./pages/AIInsightsPage'));
+const ProposalsPage = lazy(() => import('./pages/ProposalsPage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 function App() {
   const dispatch = useAppDispatch();
@@ -37,7 +37,18 @@ function App() {
   }, [dispatch]);
 
   return (
-    <Routes>
+    <Suspense
+      fallback={
+        <Box
+          role="status"
+          aria-label="Loading page"
+          sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}
+        >
+          <CircularProgress size={34} />
+        </Box>
+      }
+    >
+      <Routes>
       {/* Public routes */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
@@ -232,7 +243,8 @@ function App() {
 
       {/* 404 */}
       <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+      </Routes>
+    </Suspense>
   );
 }
 

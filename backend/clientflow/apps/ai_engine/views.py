@@ -2,6 +2,7 @@ from django.conf import settings
 from django.db.models import F
 from django.http import HttpResponse
 from django.utils import timezone
+from drf_spectacular.utils import OpenApiTypes, extend_schema
 from rest_framework.exceptions import APIException, ValidationError
 from rest_framework import status
 from rest_framework.decorators import action
@@ -48,6 +49,8 @@ class AIPredictionViewSet(ModelViewSet):
     ordering = ['-created_at']
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return AIPrediction.objects.none()
         return AIPrediction.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
@@ -63,6 +66,8 @@ class AIInsightViewSet(ModelViewSet):
     ordering = ['-created_at']
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return AIInsight.objects.none()
         return list_insights_for_user(self.request.user, self.request.query_params)
 
     def get_serializer_class(self):
@@ -106,6 +111,8 @@ class ProposalDraftViewSet(ModelViewSet):
     ordering = ['-created_at']
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return ProposalDraft.objects.none()
         return ProposalDraft.objects.filter(user=self.request.user)
 
     def get_serializer_class(self):
@@ -177,6 +184,7 @@ class ProposalDraftViewSet(ModelViewSet):
 class LeadScoreView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(responses=OpenApiTypes.OBJECT)
     def get(self, request, pk):
         lead = Lead.objects.filter(pk=pk, organization_name=get_scope_key(request.user)).first()
         if not lead:
@@ -187,6 +195,7 @@ class LeadScoreView(APIView):
 class BulkLeadScoreView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(request=OpenApiTypes.OBJECT, responses=OpenApiTypes.OBJECT)
     def post(self, request):
         scope = get_scope_key(request.user)
         lead_ids = request.data.get('lead_ids') or []
@@ -200,6 +209,7 @@ class BulkLeadScoreView(APIView):
 class InvoicePaymentRiskView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(responses=OpenApiTypes.OBJECT)
     def get(self, request, pk):
         invoice = Invoice.objects.filter(pk=pk, organization_name=get_scope_key(request.user)).select_related('client').first()
         if not invoice:
@@ -210,6 +220,7 @@ class InvoicePaymentRiskView(APIView):
 class PaymentRiskListView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(responses=AIPredictionSerializer(many=True))
     def get(self, request):
         predictions = AIPrediction.objects.filter(
             user=request.user,
@@ -222,6 +233,7 @@ class PaymentRiskListView(APIView):
 class ClientChurnRiskView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(responses=OpenApiTypes.OBJECT)
     def get(self, request, pk):
         client = Client.objects.filter(pk=pk, organization_name=get_scope_key(request.user)).first()
         if not client:
@@ -232,6 +244,7 @@ class ClientChurnRiskView(APIView):
 class ClientHealthListView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(responses=OpenApiTypes.OBJECT)
     def get(self, request):
         clients = Client.objects.filter(organization_name=get_scope_key(request.user)).order_by('-updated_at')[:100]
         results = [score_client_churn_risk(client=client, user=request.user) for client in clients]
@@ -241,6 +254,7 @@ class ClientHealthListView(APIView):
 class RevenueForecastView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(responses=OpenApiTypes.OBJECT)
     def get(self, request):
         return Response(forecast_revenue(user=request.user))
 
@@ -253,6 +267,8 @@ class AIReportViewSet(ModelViewSet):
     ordering = ['-created_at']
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return AIReport.objects.none()
         return AIReport.objects.filter(user=self.request.user)
 
     def get_serializer_class(self):

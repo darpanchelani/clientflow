@@ -19,6 +19,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
     ordering = ['-created_at']
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Project.objects.none()
         user = self.request.user
         scope = get_scope_key(user)
         queryset = Project.objects.select_related('client', 'owner', 'client__lead').prefetch_related('tasks')

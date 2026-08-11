@@ -22,6 +22,8 @@ class LeadViewSet(viewsets.ModelViewSet):
     ordering = ['-created_at']
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Lead.objects.none()
         user = self.request.user
         scope = get_scope_key(user)
         queryset = Lead.objects.select_related('owner').prefetch_related('tags')
@@ -109,4 +111,3 @@ class LeadViewSet(viewsets.ModelViewSet):
     def timeline(self, request, pk=None):
         lead = self.get_object()
         return Response(serialize_timeline(lead), status=status.HTTP_200_OK)
-

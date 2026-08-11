@@ -12,6 +12,7 @@ class UserSummarySerializer(serializers.ModelSerializer):
         model = User
         fields = ('id', 'email', 'first_name', 'last_name', 'role')
         read_only_fields = fields
+        ref_name = 'TaskUserSummary'
 
 
 class TaskActivitySerializer(serializers.ModelSerializer):
@@ -22,7 +23,7 @@ class TaskActivitySerializer(serializers.ModelSerializer):
         fields = ('id', 'action', 'message', 'metadata', 'actor_email', 'created_at')
         read_only_fields = fields
 
-    def get_actor_email(self, obj):
+    def get_actor_email(self, obj) -> str | None:
         return getattr(obj.actor, 'email', None)
 
 

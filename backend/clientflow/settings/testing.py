@@ -4,6 +4,7 @@ from .base import *
 
 
 DEBUG = False
+SECRET_KEY = "clientflow-test-secret-key-longer-than-thirty-two-bytes"
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',

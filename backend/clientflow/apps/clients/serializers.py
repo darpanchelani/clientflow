@@ -63,7 +63,7 @@ class ClientSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ('id', 'lead', 'tags', 'owner_email', 'created_at', 'updated_at')
 
-    def get_owner_email(self, obj):
+    def get_owner_email(self, obj) -> str | None:
         return getattr(obj.owner, 'email', None)
 
     def _sync_tags(self, client, tag_names):
