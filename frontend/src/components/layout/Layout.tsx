@@ -308,6 +308,12 @@ const Layout = ({ children }: LayoutProps) => {
             }}
           >
             <Avatar
+              src={user?.profile_photo_url ?? undefined}
+              alt={
+                user?.first_name
+                  ? `${user.first_name} ${user.last_name ?? ""}`.trim()
+                  : "Profile photo"
+              }
               sx={{
                 width: 34,
                 height: 34,
@@ -420,6 +426,12 @@ const Layout = ({ children }: LayoutProps) => {
               sx={{ ml: 0.5 }}
             >
               <Avatar
+                src={user?.profile_photo_url ?? undefined}
+                alt={
+                  user?.first_name
+                    ? `${user.first_name} ${user.last_name ?? ""}`.trim()
+                    : "Profile photo"
+                }
                 sx={{
                   width: 30,
                   height: 30,

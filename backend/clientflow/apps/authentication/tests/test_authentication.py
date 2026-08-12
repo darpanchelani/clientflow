@@ -1,4 +1,11 @@
+from io import BytesIO
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import override_settings
 from django.urls import reverse
+from PIL import Image
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -15,6 +22,12 @@ class AuthenticationAPITests(APITestCase):
             last_name="User",
             organization_name="ClientFlow",
         )
+
+    @staticmethod
+    def image_upload(name="profile.png", color=(53, 86, 216)):
+        content = BytesIO()
+        Image.new("RGB", (32, 32), color=color).save(content, format="PNG")
+        return SimpleUploadedFile(name, content.getvalue(), content_type="image/png")
 
     def test_register_returns_tokens_and_user(self):
         payload = {
@@ -118,6 +131,63 @@ class AuthenticationAPITests(APITestCase):
         self.assertEqual(self.user.email, "existing@example.com")
         self.assertEqual(self.user.organization_name, "ClientFlow")
         self.assertEqual(self.user.role, User.Role.USER)
+
+    def test_profile_photo_can_be_added_replaced_and_removed(self):
+        self.client.force_authenticate(self.user)
+
+        with TemporaryDirectory() as media_root, override_settings(
+            MEDIA_ROOT=media_root
+        ):
+            upload_response = self.client.patch(
+                reverse("auth:profile"),
+                {"profile_photo": self.image_upload()},
+                format="multipart",
+            )
+
+            self.assertEqual(upload_response.status_code, status.HTTP_200_OK)
+            self.assertTrue(
+                upload_response.data["profile_photo_url"].startswith("http")
+            )
+            self.user.refresh_from_db()
+            first_photo = Path(media_root, self.user.profile_photo.name)
+            self.assertTrue(first_photo.exists())
+
+            replace_response = self.client.patch(
+                reverse("auth:profile"),
+                {"profile_photo": self.image_upload("replacement.png", (22, 119, 102))},
+                format="multipart",
+            )
+
+            self.assertEqual(replace_response.status_code, status.HTTP_200_OK)
+            self.user.refresh_from_db()
+            current_photo = Path(media_root, self.user.profile_photo.name)
+            self.assertTrue(current_photo.exists())
+            self.assertFalse(first_photo.exists())
+
+            remove_response = self.client.delete(reverse("auth:profile-photo"))
+
+            self.assertEqual(remove_response.status_code, status.HTTP_200_OK)
+            self.assertIsNone(remove_response.data["profile_photo_url"])
+            self.user.refresh_from_db()
+            self.assertFalse(self.user.profile_photo)
+            self.assertFalse(current_photo.exists())
+
+    def test_profile_photo_rejects_non_image_upload(self):
+        self.client.force_authenticate(self.user)
+        upload = SimpleUploadedFile(
+            "profile.txt",
+            b"not an image",
+            content_type="text/plain",
+        )
+
+        response = self.client.patch(
+            reverse("auth:profile"),
+            {"profile_photo": upload},
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("profile_photo", response.data["fields"])
 
     def test_password_change_rejects_incorrect_current_password(self):
         self.client.force_authenticate(self.user)

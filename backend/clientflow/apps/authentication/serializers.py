@@ -66,7 +66,10 @@ class LoginSerializer(serializers.Serializer):
         return {
             "refresh": str(refresh),
             "access": str(refresh.access_token),
-            "user": UserProfileSerializer(user).data,
+            "user": UserProfileSerializer(
+                user,
+                context={"request": self.context.get("request")},
+            ).data,
         }
 
 

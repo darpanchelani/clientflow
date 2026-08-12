@@ -29,7 +29,7 @@ class RegisterView(APIView):
         payload = {
             "refresh": str(refresh),
             "access": str(refresh.access_token),
-            "user": UserProfileSerializer(user).data,
+            "user": UserProfileSerializer(user, context={"request": request}).data,
         }
         return Response(payload, status=status.HTTP_201_CREATED)
 
@@ -67,16 +67,37 @@ class ProfileView(APIView):
 
     @extend_schema(responses=UserProfileSerializer)
     def get(self, request):
-        serializer = UserProfileSerializer(request.user)
+        serializer = UserProfileSerializer(request.user, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(request=UserProfileSerializer, responses=UserProfileSerializer)
     def patch(self, request):
         serializer = UserProfileSerializer(
-            request.user, data=request.data, partial=True
+            request.user,
+            data=request.data,
+            partial=True,
+            context={"request": request},
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ProfilePhotoView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(responses=UserProfileSerializer)
+    def delete(self, request):
+        user = request.user
+        photo_name = user.profile_photo.name if user.profile_photo else None
+        photo_storage = user.profile_photo.storage if user.profile_photo else None
+
+        if photo_name:
+            user.profile_photo = None
+            user.save(update_fields=["profile_photo", "updated_at"])
+            photo_storage.delete(photo_name)
+
+        serializer = UserProfileSerializer(user, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 

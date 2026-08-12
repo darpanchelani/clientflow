@@ -3,7 +3,9 @@ import {
   Alert,
   Avatar,
   Box,
+  Button,
   Chip,
+  CircularProgress,
   Divider,
   Grid,
   IconButton,
@@ -12,7 +14,9 @@ import {
   Typography,
 } from "@mui/material";
 import BusinessOutlinedIcon from "@mui/icons-material/BusinessOutlined";
+import CameraAltOutlinedIcon from "@mui/icons-material/CameraAltOutlined";
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import MailOutlineIcon from "@mui/icons-material/MailOutline";
 import SecurityOutlinedIcon from "@mui/icons-material/SecurityOutlined";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
@@ -26,6 +30,7 @@ import AppPageHeader from "../components/common/AppPageHeader";
 import FormTextField from "../components/common/FormTextField";
 import LoadingButton from "../components/common/LoadingButton";
 import { useMutationWithFeedback } from "../hooks/useMutationWithFeedback";
+import { useNotification } from "../hooks/useNotification";
 import { formResolver } from "../lib/validation/formResolver";
 import {
   passwordChangeSchema,
@@ -33,7 +38,12 @@ import {
   profileSchema,
   ProfileFormData,
 } from "../lib/validation/schemas";
-import { changePassword, updateProfile } from "../services/profileApi";
+import {
+  changePassword,
+  removeProfilePhoto,
+  updateProfile,
+  uploadProfilePhoto,
+} from "../services/profileApi";
 import { useAppDispatch, useAppSelector } from "../store";
 import { logout, setUser } from "../store/slices/authSlice";
 import type { ApiErrorPayload } from "../utils/apiError";
@@ -47,6 +57,7 @@ const getResponsePayload = (error: unknown): ApiErrorPayload | undefined =>
 const ProfilePage = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const notify = useNotification();
   const user = useAppSelector((state) => state.auth.user);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -124,6 +135,38 @@ const ProfilePage = () => {
     },
   });
 
+  const photoMutation = useMutationWithFeedback(uploadProfilePhoto, {
+    successMessage: "Your profile photo has been updated.",
+    errorMessage: "Could not upload your profile photo.",
+    onSuccess: (updatedUser) => {
+      dispatch(setUser(updatedUser));
+    },
+  });
+
+  const removePhotoMutation = useMutationWithFeedback(removeProfilePhoto, {
+    successMessage: "Your profile photo has been removed.",
+    errorMessage: "Could not remove your profile photo.",
+    onSuccess: (updatedUser) => {
+      dispatch(setUser(updatedUser));
+    },
+  });
+
+  const handlePhotoSelection = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      notify.error("Choose a JPEG, PNG, or WebP image.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      notify.error("Choose an image that is 5 MB or smaller.");
+      return;
+    }
+    photoMutation.mutate(file);
+  };
+
   const fullName = `${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim();
   const initials =
     `${user?.first_name?.[0] ?? ""}${
@@ -166,6 +209,8 @@ const ProfilePage = () => {
           <AppCard>
             <Stack alignItems="center" spacing={1.25} sx={{ pt: 1, pb: 2.5 }}>
               <Avatar
+                src={user?.profile_photo_url ?? undefined}
+                alt={fullName || "Profile photo"}
                 sx={{
                   width: 72,
                   height: 72,
@@ -177,6 +222,59 @@ const ProfilePage = () => {
               >
                 {initials}
               </Avatar>
+              <Stack direction="row" spacing={0.75} justifyContent="center">
+                <Button
+                  component="label"
+                  aria-label={
+                    user?.profile_photo_url
+                      ? "Change profile photo"
+                      : "Add profile photo"
+                  }
+                  size="small"
+                  variant="outlined"
+                  startIcon={
+                    photoMutation.isLoading ? (
+                      <CircularProgress size={14} color="inherit" />
+                    ) : (
+                      <CameraAltOutlinedIcon />
+                    )
+                  }
+                  disabled={
+                    photoMutation.isLoading || removePhotoMutation.isLoading
+                  }
+                >
+                  {photoMutation.isLoading
+                    ? "Uploading..."
+                    : user?.profile_photo_url
+                    ? "Change photo"
+                    : "Add photo"}
+                  <Box
+                    component="input"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={handlePhotoSelection}
+                    tabIndex={-1}
+                    sx={{ display: "none" }}
+                  />
+                </Button>
+                {user?.profile_photo_url ? (
+                  <LoadingButton
+                    size="small"
+                    color="inherit"
+                    aria-label="Remove profile photo"
+                    startIcon={<DeleteOutlineIcon />}
+                    loading={removePhotoMutation.isLoading}
+                    loadingLabel="Removing..."
+                    disabled={photoMutation.isLoading}
+                    onClick={() => removePhotoMutation.mutate(undefined)}
+                  >
+                    Remove
+                  </LoadingButton>
+                ) : null}
+              </Stack>
+              <Typography variant="caption" color="text.secondary">
+                JPEG, PNG or WebP · Max 5 MB
+              </Typography>
               <Box sx={{ textAlign: "center", minWidth: 0, width: "100%" }}>
                 <Typography variant="h5" noWrap>
                   {fullName || "Workspace member"}

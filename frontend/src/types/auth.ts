@@ -5,6 +5,7 @@ export interface UserProfile {
   last_name: string;
   role?: "admin" | "manager" | "user";
   organization_name?: string;
+  profile_photo_url?: string | null;
   created_at?: string;
   updated_at?: string;
 }
